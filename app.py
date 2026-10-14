@@ -38,8 +38,10 @@ JUDGES = [
     "NAND_IMP",
 ]
 
-JUDGE_ORDER = {name: i for i, name in enumerate(JUDGES)}
-MAX_TOTAL = 25 * sum(USERS[j]["weight"] for j in JUDGES)
+MAX_TOTAL = 25 * sum(
+    USERS[j]["weight"]
+    for j in JUDGES
+)
 
 CRITERIA = [
     ("현업 문제 해결성", "실제 현장의 Pain Point / Needs를 제대로 해결하는가?"),
@@ -52,7 +54,10 @@ CRITERIA = [
 
 @st.cache_resource
 def get_db():
-    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+    return create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_KEY"],
+    )
 
 
 db = get_db()
@@ -67,7 +72,7 @@ def text_or(v, fallback=""):
     return s if s else fallback
 
 
-def html_block(markup: str):
+def html_block(markup):
     cleaned = "\n".join(
         line.lstrip()
         for line in dedent(markup).splitlines()
@@ -111,15 +116,9 @@ def get_agents():
                     r.get("name"),
                     f"Agent {slot}",
                 ),
-                "team": text_or(
-                    r.get("team")
-                ),
-                "presenter": text_or(
-                    r.get("presenter")
-                ),
-                "title": text_or(
-                    r.get("title")
-                ),
+                "team": text_or(r.get("team")),
+                "presenter": text_or(r.get("presenter")),
+                "title": text_or(r.get("title")),
             }
         )
 
@@ -150,7 +149,12 @@ def get_score(judge, slot):
     return rows[0] if rows else None
 
 
-def save_score(judge, slot, values, comment):
+def save_score(
+    judge,
+    slot,
+    values,
+    comment,
+):
     weight = USERS[judge]["weight"]
     total = sum(values)
 
@@ -175,7 +179,13 @@ def save_score(judge, slot, values, comment):
     ).execute()
 
 
-def update_agent(slot, name, team, presenter, title):
+def update_agent(
+    slot,
+    name,
+    team,
+    presenter,
+    title,
+):
     db.table("agents").upsert(
         {
             "slot": slot,
@@ -275,15 +285,13 @@ def build_aggregate():
         )
     )
 
-    out = base.merge(
-        agg,
-        left_on="slot",
-        right_on="agent_slot",
-        how="left",
-    )
-
     out = (
-        out
+        base.merge(
+            agg,
+            left_on="slot",
+            right_on="agent_slot",
+            how="left",
+        )
         .drop(
             columns=["agent_slot"],
             errors="ignore",
@@ -353,17 +361,13 @@ div[data-testid="stTabs"] button {
 }
 
 
-/* -------------------------
-   TOP BRAND
-------------------------- */
+/* HEADER */
 
 .ax-brand {
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:12px;
   padding:16px 18px;
-  margin-top:.2rem;
   margin-bottom:16px;
   border-radius:16px;
   border:1px solid rgba(130,164,206,.18);
@@ -381,7 +385,6 @@ div[data-testid="stTabs"] button {
 .ax-brand-title {
   font-size:1.18rem;
   font-weight:950;
-  white-space:nowrap;
 }
 
 .ax-brand-title span {
@@ -391,18 +394,13 @@ div[data-testid="stTabs"] button {
 .ax-brand-user {
   color:#9dafc6;
   font-size:.86rem;
-  white-space:nowrap;
 }
 
 
-/* -------------------------
-   JUDGE AGENT CARD
-------------------------- */
+/* AGENT CARD */
 
 .ax-agent-card {
-  border:
-    1px solid
-    rgba(95,143,205,.24);
+  border:1px solid rgba(95,143,205,.24);
   border-radius:16px;
   padding:14px 16px;
   margin:8px 0 15px;
@@ -432,9 +430,7 @@ div[data-testid="stTabs"] button {
 }
 
 
-/* -------------------------
-   SUMMARY
-------------------------- */
+/* SUMMARY */
 
 .ax-summary {
   display:grid;
@@ -448,9 +444,7 @@ div[data-testid="stTabs"] button {
 }
 
 .ax-metric {
-  border:
-    1px solid
-    rgba(130,164,206,.18);
+  border:1px solid rgba(130,164,206,.18);
   border-radius:15px;
   padding:13px 15px;
   background:
@@ -464,7 +458,6 @@ div[data-testid="stTabs"] button {
 .ax-metric-label {
   color:#9fb0c6;
   font-size:.73rem;
-  font-weight:700;
 }
 
 .ax-metric-value {
@@ -474,39 +467,23 @@ div[data-testid="stTabs"] button {
 }
 
 
-/* -------------------------
-   AWARDS
-------------------------- */
+/* AWARDS */
 
 .ax-awards {
-  position:relative;
-  overflow:hidden;
   border-radius:24px;
   padding:34px 18px 24px;
-  border:
-    1px solid
-    rgba(225,179,58,.22);
+  border:1px solid rgba(225,179,58,.22);
   background:
     radial-gradient(
       circle at 50% 0%,
       rgba(79,135,213,.18),
       transparent 28%
     ),
-    radial-gradient(
-      circle at 18% 0%,
-      rgba(246,214,137,.12),
-      transparent 24%
-    ),
-    radial-gradient(
-      circle at 82% 0%,
-      rgba(246,214,137,.10),
-      transparent 24%
-    ),
     linear-gradient(
       180deg,
-      #0a1a2e 0%,
+      #0a1a2e,
       #071321 58%,
-      #040c16 100%
+      #040c16
     );
   box-shadow:
     0 26px 60px
@@ -519,7 +496,6 @@ div[data-testid="stTabs"] button {
   letter-spacing:.22em;
   font-weight:900;
   color:#bdcbe0;
-  margin-top:6px;
 }
 
 .ax-awards-title {
@@ -538,7 +514,6 @@ div[data-testid="stTabs"] button {
 .ax-awards-title span {
   display:block;
   margin-top:5px;
-  font-size:1.14em;
   background:
     linear-gradient(
       180deg,
@@ -558,41 +533,30 @@ div[data-testid="stTabs"] button {
 }
 
 
-/* -------------------------
-   PODIUM
-------------------------- */
+/* PODIUM */
 
 .ax-podium-grid {
   display:grid;
   grid-template-columns:
-    minmax(0,1fr)
-    minmax(0,1.15fr)
-    minmax(0,1fr);
+    1fr
+    1.15fr
+    1fr;
   grid-template-areas:
     "silver gold bronze";
   gap:14px;
   align-items:end;
 }
 
-.ax-award-col {
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-}
-
-.ax-award-col.silver {
+.silver {
   grid-area:silver;
-  margin-top:58px;
 }
 
-.ax-award-col.gold {
+.gold {
   grid-area:gold;
-  margin-top:0;
 }
 
-.ax-award-col.bronze {
+.bronze {
   grid-area:bronze;
-  margin-top:88px;
 }
 
 .ax-award-head {
@@ -602,19 +566,14 @@ div[data-testid="stTabs"] button {
   gap:7px;
   font-weight:950;
   margin-bottom:10px;
-  text-align:center;
 }
 
 .ax-medal {
   font-size:1.7rem;
 }
 
-.ax-award-name {
-  font-size:1.05rem;
-}
-
 .ax-award-count {
-  font-size:.70rem;
+  font-size:.7rem;
   color:#9fb0c6;
 }
 
@@ -634,12 +593,9 @@ div[data-testid="stTabs"] button {
   background:
     linear-gradient(
       180deg,
-      rgba(245,248,252,.98),
-      rgba(214,225,239,.98)
+      #f5f8fc,
+      #d6e1ef
     );
-  border:
-    1px solid
-    rgba(255,255,255,.72);
   box-shadow:
     0 10px 24px
     rgba(0,0,0,.23);
@@ -647,24 +603,11 @@ div[data-testid="stTabs"] button {
 
 .ax-gold-entry {
   min-height:126px;
-  border:
-    2px solid
-    #efc351;
-  box-shadow:
-    0 0 30px
-    rgba(240,181,44,.24),
-    0 13px 30px
-    rgba(0,0,0,.28);
-}
-
-.ax-entry.empty {
-  opacity:.38;
+  border:2px solid #efc351;
 }
 
 .ax-team {
   font-weight:1000;
-  font-size:1rem;
-  overflow-wrap:anywhere;
 }
 
 .ax-presenter {
@@ -677,31 +620,17 @@ div[data-testid="stTabs"] button {
   font-size:.74rem;
   color:#526277;
   margin-top:6px;
-  line-height:1.35;
 }
 
-
-/* 단상 */
 .ax-stage {
   margin-top:10px;
   border-radius:
-    16px
-    16px
-    7px
-    7px;
+    16px 16px 7px 7px;
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:2rem;
   font-weight:1000;
-  text-shadow:
-    0 2px 8px
-    rgba(0,0,0,.35);
-  box-shadow:
-    inset 0 1px
-    rgba(255,255,255,.26),
-    0 14px 28px
-    rgba(0,0,0,.28);
 }
 
 .silver .ax-stage {
@@ -713,14 +642,8 @@ div[data-testid="stTabs"] button {
       #7d8999 52%,
       #4d5968
     );
-  color:#fff;
 }
 
-/*
-  핵심 수정:
-  1위 단상을 크게 높여
-  우수 2개 카드 높이보다 시각적으로 더 위로 올라오게 함
-*/
 .gold .ax-stage {
   height:230px;
   background:
@@ -731,13 +654,6 @@ div[data-testid="stTabs"] button {
       #744000
     );
   color:#fff8cf;
-  box-shadow:
-    0 0 35px
-    rgba(233,181,53,.22),
-    inset 0 1px
-    rgba(255,255,255,.32),
-    0 18px 34px
-    rgba(0,0,0,.32);
 }
 
 .bronze .ax-stage {
@@ -749,19 +665,14 @@ div[data-testid="stTabs"] button {
       #8e4c21 52%,
       #5c3017
     );
-  color:#ffe5c7;
 }
 
 
-/* -------------------------
-   SECTION
-------------------------- */
+/* SECTION */
 
 .ax-section {
   margin-top:18px;
-  border:
-    1px solid
-    rgba(130,164,206,.18);
+  border:1px solid rgba(130,164,206,.18);
   border-radius:18px;
   background:
     linear-gradient(
@@ -785,16 +696,12 @@ div[data-testid="stTabs"] button {
 }
 
 
-/* -------------------------
-   RESULT TABLE
-------------------------- */
+/* RESULT TABLE */
 
 .ax-table-wrap {
   overflow-x:auto;
   border-radius:13px;
-  border:
-    1px solid
-    rgba(130,164,206,.18);
+  border:1px solid rgba(130,164,206,.18);
 }
 
 .ax-table {
@@ -809,10 +716,6 @@ div[data-testid="stTabs"] button {
   color:#d8e4f2;
   padding:10px 8px;
   font-size:.75rem;
-  text-align:center;
-  border-bottom:
-    1px solid
-    rgba(130,164,206,.18);
   white-space:nowrap;
 }
 
@@ -826,13 +729,12 @@ div[data-testid="stTabs"] button {
     rgba(143,177,221,.09);
 }
 
-.ax-table tr.rank1 td {
-  background:
-    linear-gradient(
-      90deg,
-      rgba(217,167,40,.13),
-      rgba(217,167,40,.03)
-    );
+.ax-left {
+  text-align:left !important;
+}
+
+.ax-team-cell {
+  font-weight:950;
 }
 
 .ax-rank {
@@ -846,238 +748,287 @@ div[data-testid="stTabs"] button {
   background:#1b314d;
 }
 
-.ax-rank.r1 {
+.r1 {
   background:
     linear-gradient(
       135deg,
       #ffe487,
       #c98a0d
-    );
+    ) !important;
   color:#291900;
 }
 
-.ax-rank.r2 {
+.r2 {
   background:
     linear-gradient(
       135deg,
       #edf2f7,
       #8997a8
-    );
+    ) !important;
   color:#13202e;
 }
 
-.ax-rank.r3 {
+.r3 {
   background:
     linear-gradient(
       135deg,
       #e3a36e,
       #8f4a24
-    );
+    ) !important;
   color:#261208;
 }
 
-.ax-left {
-  text-align:left !important;
-  max-width:280px;
+
+/* COMMENT MATRIX */
+
+.ax-comment-matrix-wrap {
+  overflow:auto;
+  max-height:680px;
+  border:1px solid rgba(130,164,206,.18);
+  border-radius:16px;
+  background:rgba(4,15,28,.58);
 }
 
-.ax-team-cell {
-  font-weight:950;
+.ax-comment-matrix {
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:2450px;
+  width:max-content;
 }
 
-
-/* -------------------------
-   COMMENTS
-------------------------- */
-
-.ax-comments {
-  display:grid;
-  grid-template-columns:
-    repeat(
-      3,
-      minmax(0,1fr)
-    );
-  gap:10px;
+.ax-comment-matrix th,
+.ax-comment-matrix td {
+  padding:10px;
+  vertical-align:top;
 }
 
-.ax-comment {
-  border:
+.ax-comment-matrix thead th {
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#0e223a;
+  color:#cbd8e8;
+  font-size:.75rem;
+  font-weight:900;
+  text-align:center;
+  border-bottom:
     1px solid
-    rgba(117,159,215,.18);
-  border-radius:14px;
-  padding:13px 14px;
-  min-height:126px;
+    rgba(130,164,206,.18);
+}
+
+/* 왼쪽 순위 영역 고정 */
+.ax-comment-rank-head {
+  position:sticky !important;
+  left:0;
+  z-index:8 !important;
+  min-width:220px;
+  max-width:220px;
+  text-align:left !important;
+  background:#0a1b30 !important;
+}
+
+.ax-comment-rank {
+  position:sticky;
+  left:0;
+  z-index:4;
+  min-width:220px;
+  max-width:220px;
   background:
     linear-gradient(
       180deg,
-      rgba(13,31,54,.92),
-      rgba(6,20,36,.92)
+      #0d223a,
+      #081829
+    );
+  border-right:
+    1px solid
+    rgba(130,164,206,.20);
+}
+
+.ax-rank-badge {
+  display:inline-flex;
+  padding:6px 9px;
+  border-radius:999px;
+  font-weight:950;
+  font-size:.78rem;
+  margin-bottom:9px;
+}
+
+.ax-rank-badge.gold {
+  background:rgba(222,172,45,.18);
+  color:#ffd96f;
+  border:1px solid rgba(235,190,75,.35);
+}
+
+.ax-rank-badge.silver {
+  background:rgba(201,211,224,.14);
+  color:#e8eef6;
+  border:1px solid rgba(204,214,226,.28);
+}
+
+.ax-rank-badge.bronze {
+  background:rgba(187,111,58,.16);
+  color:#efb17d;
+  border:1px solid rgba(200,123,70,.30);
+}
+
+.ax-rank-team {
+  font-weight:950;
+  font-size:.92rem;
+}
+
+.ax-rank-presenter {
+  font-size:.76rem;
+  color:#b8c6d8;
+  margin-top:4px;
+}
+
+.ax-rank-title {
+  font-size:.72rem;
+  color:#8fa2ba;
+  margin-top:4px;
+  line-height:1.4;
+}
+
+
+/* 코멘트 박스 */
+
+.ax-comment-card {
+  width:230px;
+  min-height:132px;
+  padding:13px 14px;
+  border-radius:16px;
+  border:1px solid rgba(112,151,201,.20);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18,40,67,.94),
+      rgba(8,24,42,.96)
+    );
+  box-shadow:
+    0 10px 24px
+    rgba(0,0,0,.18);
+}
+
+.ax-comment-card.champion {
+  border-color:rgba(232,190,79,.45);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(59,45,17,.48),
+      rgba(22,26,34,.96)
     );
 }
 
-.ax-comment.champion {
-  border-color:
-    rgba(240,190,60,.5);
-  box-shadow:
-    inset 0 0 0 1px
-    rgba(240,190,60,.08);
+.ax-comment-card.strat {
+  border-color:rgba(94,151,239,.40);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(24,52,91,.94),
+      rgba(8,26,48,.96)
+    );
 }
 
-.ax-comment-top {
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:8px;
-}
-
-.ax-judge {
+.ax-comment-judge {
   font-weight:950;
-  color:#9ec0ff;
+  font-size:.78rem;
+  color:#a9c7f6;
+  margin-bottom:10px;
 }
 
-.ax-comment.champion
-.ax-judge {
-  color:#ffd86d;
+.champion .ax-comment-judge {
+  color:#ffd76b;
 }
 
-.ax-agent {
-  font-size:.69rem;
-  color:#91a2b7;
-  text-align:right;
+.strat .ax-comment-judge {
+  color:#8fc0ff;
 }
 
-.ax-comment-body {
-  font-size:.87rem;
-  line-height:1.5;
-  color:#edf3f9;
+.ax-comment-text {
+  font-size:.82rem;
+  line-height:1.55;
+  color:#f0f4f9;
   white-space:pre-wrap;
   word-break:break-word;
 }
 
-.ax-comment-score {
-  font-size:.69rem;
-  color:#7f93ad;
-  margin-top:10px;
+.ax-comment-empty {
+  color:#60738b;
+  font-size:1.1rem;
+  text-align:center;
+  padding-top:28px;
 }
 
 
-/* -------------------------
-   TABLET
-------------------------- */
+/* TABLET */
 
-@media(max-width:1099px){
+@media(max-width:1099px) {
 
-  .ax-podium-grid{
-    gap:8px;
-  }
-
-  .ax-entry{
-    padding:10px 7px;
-    min-height:96px;
-  }
-
-  .ax-gold-entry{
-    min-height:112px;
-  }
-
-  .ax-team{
-    font-size:.84rem;
-  }
-
-  .ax-presenter{
-    font-size:.73rem;
-  }
-
-  .ax-title{
-    font-size:.64rem;
-  }
-
-  .ax-comments{
-    grid-template-columns:
-      repeat(
-        2,
-        minmax(0,1fr)
-      );
-  }
-
-  .silver .ax-stage{
-    height:78px;
-  }
-
-  .gold .ax-stage{
+  .gold .ax-stage {
     height:200px;
   }
 
-  .bronze .ax-stage{
+  .silver .ax-stage {
+    height:78px;
+  }
+
+  .bronze .ax-stage {
     height:62px;
   }
 }
 
 
-/* -------------------------
-   MOBILE
-------------------------- */
+/* MOBILE */
 
-@media(max-width:699px){
+@media(max-width:699px) {
 
-  .block-container{
+  .block-container {
     padding-top:1.7rem;
     padding-left:.7rem;
     padding-right:.7rem;
   }
 
-  .ax-brand-user{
+  .ax-brand-user {
     display:none;
   }
 
-  .ax-summary{
+  .ax-summary {
     grid-template-columns:1fr;
-    gap:7px;
   }
 
-  .ax-awards{
-    padding:24px 10px 18px;
-  }
-
-  .ax-podium-grid{
+  .ax-podium-grid {
     grid-template-columns:1fr;
     grid-template-areas:
       "gold"
       "silver"
       "bronze";
-    gap:18px;
   }
 
-  .ax-award-col{
-    max-width:520px;
-    width:100%;
-    margin:0 auto !important;
-  }
-
-  .ax-stage{
+  .ax-stage {
     height:48px !important;
-    font-size:1.5rem;
   }
 
-  .gold .ax-stage{
+  .gold .ax-stage {
     height:90px !important;
   }
 
-  .ax-entry,
-  .ax-gold-entry{
-    min-height:auto;
-  }
-
-  .ax-comments{
-    grid-template-columns:1fr;
-  }
-
-  .ax-section{
-    padding:12px;
-  }
-
-  .ax-table{
+  .ax-table {
     min-width:860px;
+  }
+
+  .ax-comment-matrix-wrap {
+    max-height:650px;
+  }
+
+  .ax-comment-rank,
+  .ax-comment-rank-head {
+    min-width:190px;
+    max-width:190px;
+  }
+
+  .ax-comment-card {
+    width:220px;
+    min-height:120px;
   }
 }
 
@@ -1119,16 +1070,14 @@ def render_agent_card(agent):
           <div class="ax-agent-title">
             {esc(agent_title(agent))}
           </div>
-
           <div class="ax-agent-meta">
             <span>
               <b>팀</b>
-              {esc(text_or(agent.get('team'), '팀 미입력'))}
+              {esc(text_or(agent.get("team"), "팀 미입력"))}
             </span>
-
             <span>
               <b>발표자</b>
-              {esc(text_or(agent.get('presenter'), '발표자 미입력'))}
+              {esc(text_or(agent.get("presenter"), "발표자 미입력"))}
             </span>
           </div>
         </div>
@@ -1140,13 +1089,10 @@ def award_entry(
     row,
     gold=False,
 ):
-
     if row is None:
         return (
-            '<div class="ax-entry empty">'
+            '<div class="ax-entry">'
             '<div class="ax-team">&nbsp;</div>'
-            '<div class="ax-presenter">&nbsp;</div>'
-            '<div class="ax-title">&nbsp;</div>'
             '</div>'
         )
 
@@ -1157,27 +1103,18 @@ def award_entry(
         "ax-entry"
     )
 
-    team = text_or(
-        row.get("팀"),
-        "팀 미입력",
-    )
-
-    presenter = text_or(
-        row.get("발표자"),
-        "발표자 미입력",
-    )
-
-    title = text_or(
-        row.get("제목"),
-        f"Agent {int(row.get('slot', 0))}",
-    )
-
     return (
         f'<div class="{cls}">'
-        f'<div class="ax-team">{esc(team)}</div>'
-        f'<div class="ax-presenter">{esc(presenter)}</div>'
-        f'<div class="ax-title">{esc(title)}</div>'
-        '</div>'
+        f'<div class="ax-team">'
+        f'{esc(text_or(row.get("팀"), "팀 미입력"))}'
+        f'</div>'
+        f'<div class="ax-presenter">'
+        f'{esc(text_or(row.get("발표자"), "발표자 미입력"))}'
+        f'</div>'
+        f'<div class="ax-title">'
+        f'{esc(text_or(row.get("제목"), f"Agent {int(row.get("slot", 0))}"))}'
+        f'</div>'
+        f'</div>'
     )
 
 
@@ -1185,7 +1122,6 @@ def render_summary(
     completed_judges,
     complete_count,
 ):
-
     html_block(
         f"""
         <div class="ax-summary">
@@ -1223,9 +1159,7 @@ def render_summary(
 
 
 def render_awards(result):
-    rec = result.to_dict(
-        "records"
-    )
+    rec = result.to_dict("records")
 
     first = (
         rec[0]
@@ -1261,9 +1195,7 @@ def render_awards(result):
 
           <div class="ax-awards-title">
             🏆
-            <span>
-              AWARDS
-            </span>
+            <span>AWARDS</span>
           </div>
 
           <div class="ax-awards-sub">
@@ -1272,13 +1204,11 @@ def render_awards(result):
 
           <div class="ax-podium-grid">
 
-            <div class="ax-award-col silver">
+            <div class="silver">
 
               <div class="ax-award-head">
-                <span class="ax-medal">🥈</span>
-                <span class="ax-award-name">
-                  우수상
-                </span>
+                🥈
+                <b>우수상</b>
                 <span class="ax-award-count">
                   2팀
                 </span>
@@ -1296,20 +1226,18 @@ def render_awards(result):
             </div>
 
 
-            <div class="ax-award-col gold">
+            <div class="gold">
 
               <div class="ax-award-head">
-                <span class="ax-medal">🥇</span>
-                <span class="ax-award-name">
-                  최우수상
-                </span>
+                🥇
+                <b>최우수상</b>
                 <span class="ax-award-count">
                   1팀
                 </span>
               </div>
 
               <div class="ax-entry-list">
-                {award_entry(first, gold=True)}
+                {award_entry(first, True)}
               </div>
 
               <div class="ax-stage">
@@ -1319,13 +1247,11 @@ def render_awards(result):
             </div>
 
 
-            <div class="ax-award-col bronze">
+            <div class="bronze">
 
               <div class="ax-award-head">
-                <span class="ax-medal">🥉</span>
-                <span class="ax-award-name">
-                  장려상
-                </span>
+                🥉
+                <b>장려상</b>
                 <span class="ax-award-count">
                   2팀
                 </span>
@@ -1352,54 +1278,52 @@ def render_awards(result):
 def render_result_table(result):
     rows = []
 
-    for _, r in result.iterrows():
+    for _, row in result.iterrows():
+
         rank = int(
-            r["순위"]
+            row["순위"]
         )
 
         if rank == 1:
-            rc = "r1"
+            rank_class = "r1"
             award = "🥇 최우수"
-            tr = "rank1"
 
         elif rank in (
             2,
             3,
         ):
-            rc = "r2"
+            rank_class = "r2"
             award = "🥈 우수"
-            tr = ""
 
         else:
-            rc = "r3"
+            rank_class = "r3"
             award = "🥉 장려"
-            tr = ""
 
         rows.append(
             f"""
-            <tr class="{tr}">
+            <tr>
 
               <td>
-                <span class="ax-rank {rc}">
+                <span class="ax-rank {rank_class}">
                   {rank}
                 </span>
               </td>
 
               <td class="ax-team-cell">
-                {esc(text_or(r['팀']))}
+                {esc(row["팀"])}
               </td>
 
               <td>
-                {esc(text_or(r['발표자']))}
+                {esc(row["발표자"])}
               </td>
 
               <td class="ax-left">
-                {esc(text_or(r['제목']))}
+                {esc(row["제목"])}
               </td>
 
               <td>
                 <b>
-                  {int(r['최종점수'])}
+                  {int(row["최종점수"])}
                 </b>
               </td>
 
@@ -1408,27 +1332,27 @@ def render_result_table(result):
               </td>
 
               <td>
-                {int(r['제출인원'])}/9
+                {int(row["제출인원"])}/9
               </td>
 
               <td>
-                {int(r['현업문제'])}
+                {int(row["현업문제"])}
               </td>
 
               <td>
-                {int(r['업무효과'])}
+                {int(row["업무효과"])}
               </td>
 
               <td>
-                {int(r['완성도'])}
+                {int(row["완성도"])}
               </td>
 
               <td>
-                {int(r['활용편의'])}
+                {int(row["활용편의"])}
               </td>
 
               <td>
-                {int(r['확산가능'])}
+                {int(row["확산가능"])}
               </td>
 
             </tr>
@@ -1441,9 +1365,6 @@ def render_result_table(result):
 
           <div class="ax-section-title">
             📊 최종 결과표
-            <span class="ax-section-sub">
-              가중치 반영 실시간 집계
-            </span>
           </div>
 
           <div class="ax-table-wrap">
@@ -1485,130 +1406,159 @@ def render_comments(
     result,
 ):
 
-    if comments_df.empty:
+    comment_map = {}
 
-        html_block(
-            """
-            <div class="ax-section">
+    if not comments_df.empty:
 
-              <div class="ax-section-title">
-                💬 심사위원 코멘트
-              </div>
+        for _, row in comments_df.iterrows():
 
-              <div style="
-                color:#9fb0c6;
-                font-size:.85rem;
-              ">
-                아직 등록된 코멘트가 없습니다.
-              </div>
+            comment_map[
+                (
+                    str(
+                        row["judge"]
+                    ),
+                    int(
+                        row["agent_slot"]
+                    ),
+                )
+            ] = (
+                str(
+                    row.get("comment")
+                    or ""
+                )
+                .strip()
+            )
 
-            </div>
-            """
+    header_cells = [
+        '<th class="ax-comment-rank-head">'
+        '순위 / Agent'
+        '</th>'
+    ]
+
+    for judge in JUDGES:
+
+        label = (
+            "👑 DIFF_CHAMPION"
+            if judge
+            == "DIFF_CHAMPION"
+            else judge
         )
 
-        return
-
-    agent_map = {
-        int(r["slot"]): {
-            "team": text_or(
-                r["팀"]
-            ),
-            "title": text_or(
-                r["제목"],
-                f"Agent {int(r['slot'])}",
-            ),
-        }
-        for _, r in result.iterrows()
-    }
-
-    comments = comments_df.copy()
-
-    comments[
-        "judge_order"
-    ] = (
-        comments[
-            "judge"
-        ]
-        .map(
-            JUDGE_ORDER
+        header_cells.append(
+            f"<th>{esc(label)}</th>"
         )
-        .fillna(
-            999
+
+    body_rows = []
+
+    for _, row in result.iterrows():
+
+        rank = int(
+            row["순위"]
         )
-    )
-
-    comments = (
-        comments
-        .sort_values(
-            [
-                "judge_order",
-                "agent_slot",
-            ]
-        )
-    )
-
-    cards = []
-
-    for _, r in comments.iterrows():
 
         slot = int(
-            r["agent_slot"]
+            row["slot"]
         )
 
-        info = agent_map.get(
-            slot,
-            {
-                "team": "",
-                "title": f"Agent {slot}",
-            },
+        if rank == 1:
+            badge_class = "gold"
+            award_text = "🥇 1위 · 최우수"
+
+        elif rank in (
+            2,
+            3,
+        ):
+            badge_class = "silver"
+            award_text = f"🥈 {rank}위 · 우수"
+
+        else:
+            badge_class = "bronze"
+            award_text = f"🥉 {rank}위 · 장려"
+
+        left = (
+            f'<td class="ax-comment-rank">'
+            f'<div class="ax-rank-badge {badge_class}">'
+            f'{award_text}'
+            f'</div>'
+            f'<div class="ax-rank-team">'
+            f'{esc(text_or(row["팀"], "팀 미입력"))}'
+            f'</div>'
+            f'<div class="ax-rank-presenter">'
+            f'{esc(text_or(row["발표자"], "발표자 미입력"))}'
+            f'</div>'
+            f'<div class="ax-rank-title">'
+            f'{esc(text_or(row["제목"], f"Agent {slot}"))}'
+            f'</div>'
+            f'</td>'
         )
 
-        is_champion = (
-            r["judge"]
-            == "DIFF_CHAMPION"
-        )
+        cells = [
+            left
+        ]
 
-        cls = (
-            " champion"
-            if is_champion
-            else ""
-        )
+        for judge in JUDGES:
 
-        crown = (
-            "👑 "
-            if is_champion
-            else ""
-        )
+            comment = (
+                comment_map.get(
+                    (
+                        judge,
+                        slot,
+                    ),
+                    "",
+                )
+            )
 
-        cards.append(
+            if judge == "DIFF_CHAMPION":
+                card_class = " champion"
+                judge_label = "👑 DIFF_CHAMPION"
+
+            elif judge == "DIFF_STRAT":
+                card_class = " strat"
+                judge_label = "DIFF_STRAT"
+
+            else:
+                card_class = ""
+                judge_label = judge
+
+            if comment:
+
+                comment_body = (
+                    f'<div class="ax-comment-text">'
+                    f'{esc(comment)}'
+                    f'</div>'
+                )
+
+            else:
+
+                comment_body = (
+                    '<div class="ax-comment-empty">'
+                    '—'
+                    '</div>'
+                )
+
+            cells.append(
+                f"""
+                <td>
+
+                  <div class="ax-comment-card{card_class}">
+
+                    <div class="ax-comment-judge">
+                      {esc(judge_label)}
+                    </div>
+
+                    {comment_body}
+
+                  </div>
+
+                </td>
+                """
+            )
+
+        body_rows.append(
             f"""
-            <div class="ax-comment{cls}">
-
-              <div class="ax-comment-top">
-
-                <div class="ax-judge">
-                  {crown}{esc(r['judge'])}
-                </div>
-
-                <div class="ax-agent">
-                  {esc(info['team'])}
-                  <br>
-                  {esc(info['title'])}
-                </div>
-
-              </div>
-
-              <div class="ax-comment-body">
-                {esc(r['comment'])}
-              </div>
-
-              <div class="ax-comment-score">
-                원점수 {int(r['total'])}/25
-                · 가중치 ×{int(r['weight'])}
-                · 반영 {int(r['weighted_total'])}점
-              </div>
-
-            </div>
+            <tr>
+              {''.join(cells)}
+            </tr>
             """
         )
 
@@ -1621,15 +1571,27 @@ def render_comments(
             💬 심사위원 코멘트
 
             <span class="ax-section-sub">
-              DIFF_CHAMPION →
-              DIFF_STRAT →
-              나머지 ABC 순
+              왼쪽 순위는 고정 · 좌우/상하 스크롤 가능
             </span>
 
           </div>
 
-          <div class="ax-comments">
-            {''.join(cards)}
+          <div class="ax-comment-matrix-wrap">
+
+            <table class="ax-comment-matrix">
+
+              <thead>
+                <tr>
+                  {''.join(header_cells)}
+                </tr>
+              </thead>
+
+              <tbody>
+                {''.join(body_rows)}
+              </tbody>
+
+            </table>
+
           </div>
 
         </div>
@@ -1640,6 +1602,7 @@ def render_comments(
 # ---------------------------------------------------
 # LOGIN
 # ---------------------------------------------------
+
 if "user" not in st.session_state:
 
     render_brand()
@@ -1684,8 +1647,6 @@ if "user" not in st.session_state:
                 st.text_input(
                     "비밀번호",
                     type="password",
-                    placeholder=
-                        "비밀번호 입력",
                 )
             )
 
@@ -1734,13 +1695,17 @@ if "user" not in st.session_state:
     st.stop()
 
 
-user = st.session_state[
-    "user"
-]
+user = (
+    st.session_state[
+        "user"
+    ]
+)
 
-role = st.session_state[
-    "role"
-]
+role = (
+    st.session_state[
+        "role"
+    ]
+)
 
 render_brand(
     user
@@ -1768,17 +1733,17 @@ with logout_col:
 # ---------------------------------------------------
 # JUDGE
 # ---------------------------------------------------
+
 if role == "judge":
 
-    weight = (
+    if (
         USERS[
             user
         ][
             "weight"
         ]
-    )
-
-    if weight == 3:
+        == 3
+    ):
 
         st.warning(
             "DIFF_CHAMPION 채점은 **3배 가중치**로 최종 집계됩니다."
@@ -1790,7 +1755,9 @@ if role == "judge":
             "채점 결과는 **1배 가중치**로 최종 집계됩니다."
         )
 
-    agents = get_agents()
+    agents = (
+        get_agents()
+    )
 
     agent_map = {
         f"{a['slot']}. {agent_title(a)}":
@@ -1817,12 +1784,8 @@ if role == "judge":
         next(
             a
             for a in agents
-            if int(
-                a["slot"]
-            )
-            == int(
-                slot
-            )
+            if a["slot"]
+            == slot
         )
     )
 
@@ -1830,20 +1793,12 @@ if role == "judge":
         selected_agent
     )
 
-    old = get_score(
-        user,
-        slot,
+    old = (
+        get_score(
+            user,
+            slot,
+        )
     )
-
-    defaults = [
-        3,
-        3,
-        3,
-        3,
-        3,
-    ]
-
-    old_comment = ""
 
     if old:
 
@@ -1870,9 +1825,17 @@ if role == "judge":
             "이미 제출한 Agent입니다. 다시 제출하면 기존 점수가 수정됩니다."
         )
 
-    st.caption(
-        "1점 미흡 · 2점 다소 미흡 · 3점 보통 · 4점 우수 · 5점 매우 우수"
-    )
+    else:
+
+        defaults = [
+            3,
+            3,
+            3,
+            3,
+            3,
+        ]
+
+        old_comment = ""
 
     values = []
 
@@ -1956,7 +1919,7 @@ if role == "judge":
         except Exception as ex:
 
             st.error(
-                "저장 중 오류가 발생했습니다. 다시 제출해 주세요."
+                "저장 중 오류가 발생했습니다."
             )
 
             st.caption(
@@ -1965,14 +1928,14 @@ if role == "judge":
                 )
             )
 
-    rows = get_all_scores()
-
     done_slots = {
         int(
-            r["agent_slot"]
+            row[
+                "agent_slot"
+            ]
         )
-        for r in rows
-        if r.get(
+        for row in get_all_scores()
+        if row.get(
             "judge"
         )
         == user
@@ -1997,6 +1960,7 @@ if role == "judge":
 # ---------------------------------------------------
 # MASTER
 # ---------------------------------------------------
+
 st.success(
     "MASTER 관리자 모드 · 실시간 집계"
 )
@@ -2114,7 +2078,7 @@ with tab_result:
         else:
 
             st.success(
-                "9명 전원의 5개 Agent 채점이 완료되었습니다. 최종 결과를 확정할 수 있습니다."
+                "9명 전원의 5개 Agent 채점이 완료되었습니다."
             )
 
         comments_df = (
@@ -2176,8 +2140,7 @@ with tab_result:
                 "DIFFUSION_AX_최종결과.csv",
             mime=
                 "text/csv",
-            use_container_width=
-                True,
+            use_container_width=True,
         )
 
     live_results()
@@ -2191,11 +2154,8 @@ with tab_status:
     def live_status():
 
         agents = get_agents()
-
-        score_df = (
-            pd.DataFrame(
-                get_all_scores()
-            )
+        score_df = pd.DataFrame(
+            get_all_scores()
         )
 
         rows = []
@@ -2234,11 +2194,9 @@ with tab_status:
                                 "agent_slot"
                             ]
                             .astype(int)
-                            == int(
-                                agent[
-                                    "slot"
-                                ]
-                            )
+                            == agent[
+                                "slot"
+                            ]
                         )
                     ).any()
 
@@ -2256,48 +2214,12 @@ with tab_status:
                 row
             )
 
-        st.markdown(
-            "### ✅ 제출 현황"
-        )
-
-        st.caption(
-            "DIFF_CHAMPION → DIFF_STRAT → 나머지 ABC 순"
-        )
-
         st.dataframe(
             pd.DataFrame(
                 rows
             ),
             use_container_width=True,
             hide_index=True,
-        )
-
-        complete_count = (
-            0
-            if score_df.empty
-            else
-            len(
-                score_df
-                .drop_duplicates(
-                    subset=[
-                        "judge",
-                        "agent_slot",
-                    ]
-                )
-            )
-        )
-
-        st.progress(
-            min(
-                complete_count
-                / 45,
-                1.0,
-            )
-        )
-
-        st.caption(
-            f"전체 채점 진행률: "
-            f"{complete_count}/45"
         )
 
     live_status()
@@ -2307,10 +2229,6 @@ with tab_settings:
 
     st.markdown(
         "### ⚙️ Agent 발표 정보 설정"
-    )
-
-    st.caption(
-        "팀 / 발표자 / 제목을 입력하면 포디움·결과표·심사위원 화면에 즉시 반영됩니다."
     )
 
     agents = get_agents()
@@ -2323,7 +2241,7 @@ with tab_settings:
 
         for agent in agents:
 
-            slot = int(
+            slot = (
                 agent[
                     "slot"
                 ]
@@ -2360,8 +2278,6 @@ with tab_settings:
                             agent[
                                 "team"
                             ],
-                        placeholder=
-                            "예: DRAM_ALD",
                         key=
                             f"team_{slot}",
                     )
@@ -2376,8 +2292,6 @@ with tab_settings:
                             agent[
                                 "presenter"
                             ],
-                        placeholder=
-                            "예: 홍길동",
                         key=
                             f"presenter_{slot}",
                     )
@@ -2390,8 +2304,6 @@ with tab_settings:
                         agent[
                             "title"
                         ],
-                    placeholder=
-                        "예: DORIS Super Agent",
                     key=
                         f"title_{slot}",
                 )
@@ -2421,52 +2333,33 @@ with tab_settings:
 
     if save_agents:
 
-        try:
+        for slot, values in (
+            edited.items()
+        ):
 
-            for (
+            update_agent(
                 slot,
-                values,
-            ) in edited.items():
-
-                update_agent(
-                    slot,
-                    values[
-                        "name"
-                    ],
-                    values[
-                        "team"
-                    ],
-                    values[
-                        "presenter"
-                    ],
-                    values[
-                        "title"
-                    ],
-                )
-
-            st.success(
-                "5개 Agent 발표 정보가 저장되었습니다."
+                values[
+                    "name"
+                ],
+                values[
+                    "team"
+                ],
+                values[
+                    "presenter"
+                ],
+                values[
+                    "title"
+                ],
             )
 
-            st.rerun()
+        st.success(
+            "5개 Agent 발표 정보가 저장되었습니다."
+        )
 
-        except Exception as ex:
-
-            st.error(
-                "발표 정보 저장에 실패했습니다."
-            )
-
-            st.caption(
-                str(
-                    ex
-                )
-            )
+        st.rerun()
 
     st.divider()
-
-    st.markdown(
-        "### 🗑 행사 전 테스트 점수 초기화"
-    )
 
     confirm = (
         st.checkbox(
@@ -2481,24 +2374,10 @@ with tab_settings:
         use_container_width=True,
     ):
 
-        try:
+        clear_all_scores()
 
-            clear_all_scores()
+        st.success(
+            "모든 점수가 초기화되었습니다."
+        )
 
-            st.success(
-                "모든 점수가 초기화되었습니다."
-            )
-
-            st.rerun()
-
-        except Exception as ex:
-
-            st.error(
-                "초기화에 실패했습니다."
-            )
-
-            st.caption(
-                str(
-                    ex
-                )
-            )
+        st.rerun()
