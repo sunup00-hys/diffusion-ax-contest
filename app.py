@@ -1,5 +1,6 @@
 import html
 from datetime import datetime, timezone
+from textwrap import dedent
 
 import pandas as pd
 import streamlit as st
@@ -27,6 +28,7 @@ USERS = {
     "MASTER": {"password": "2006", "role": "admin", "weight": 0},
 }
 
+
 JUDGES = [
     "DIFF_CHAMPION",
     "DIFF_STRAT",
@@ -39,15 +41,18 @@ JUDGES = [
     "NAND_IMP",
 ]
 
+
 JUDGE_ORDER = {
     name: i
     for i, name in enumerate(JUDGES)
 }
 
+
 MAX_TOTAL = 25 * sum(
     USERS[u]["weight"]
     for u in JUDGES
 )
+
 
 CRITERIA = [
     (
@@ -84,6 +89,47 @@ def get_db():
 db = get_db()
 
 
+def e(value):
+    return html.escape(
+        str(
+            value
+            or ""
+        )
+    )
+
+
+def text_or(
+    value,
+    fallback="",
+):
+    value = str(
+        value
+        or ""
+    ).strip()
+
+    return (
+        value
+        if value
+        else fallback
+    )
+
+
+def html_block(
+    markup,
+):
+    st.markdown(
+        dedent(
+            markup
+        ).strip(),
+        unsafe_allow_html=True,
+    )
+
+
+def logout():
+    st.session_state.clear()
+    st.rerun()
+
+
 def get_agents():
 
     rows = (
@@ -91,20 +137,27 @@ def get_agents():
         .select(
             "slot,name,team,presenter,title"
         )
-        .order("slot")
+        .order(
+            "slot"
+        )
         .execute()
         .data
         or []
     )
 
     by_slot = {
-        int(r["slot"]): r
+        int(
+            r["slot"]
+        ): r
         for r in rows
     }
 
     result = []
 
-    for slot in range(1, 6):
+    for slot in range(
+        1,
+        6,
+    ):
 
         r = by_slot.get(
             slot,
@@ -114,22 +167,19 @@ def get_agents():
         result.append(
             {
                 "slot": slot,
-                "name": (
-                    r.get("name")
-                    or f"Agent {slot}"
-                ).strip(),
-                "team": (
+                "name": text_or(
+                    r.get("name"),
+                    f"Agent {slot}",
+                ),
+                "team": text_or(
                     r.get("team")
-                    or ""
-                ).strip(),
-                "presenter": (
+                ),
+                "presenter": text_or(
                     r.get("presenter")
-                    or ""
-                ).strip(),
-                "title": (
+                ),
+                "title": text_or(
                     r.get("title")
-                    or ""
-                ).strip(),
+                ),
             }
         )
 
@@ -183,7 +233,9 @@ def save_score(
 ):
 
     weight = (
-        USERS[judge][
+        USERS[
+            judge
+        ][
             "weight"
         ]
     )
@@ -198,32 +250,25 @@ def save_score(
         {
             "judge": judge,
             "agent_slot": slot,
-
             "c1": values[0],
             "c2": values[1],
             "c3": values[2],
             "c4": values[3],
             "c5": values[4],
-
             "total": total,
-
             "weight": weight,
-
             "weighted_total":
-                total * weight,
-
+                total
+                * weight,
             "comment":
                 comment.strip(),
-
             "updated_at":
                 datetime.now(
                     timezone.utc
                 ).isoformat(),
         },
-
         on_conflict=
             "judge,agent_slot",
-
     ).execute()
 
 
@@ -243,34 +288,28 @@ def update_agent(
                 slot,
 
             "name":
-                (
-                    name
-                    or ""
-                ).strip()
-                or f"Agent {slot}",
+                text_or(
+                    name,
+                    f"Agent {slot}",
+                ),
 
             "team":
-                (
+                text_or(
                     team
-                    or ""
-                ).strip(),
+                ),
 
             "presenter":
-                (
+                text_or(
                     presenter
-                    or ""
-                ).strip(),
+                ),
 
             "title":
-                (
+                text_or(
                     title
-                    or ""
-                ).strip(),
+                ),
         },
-
         on_conflict=
             "slot",
-
     ).execute()
 
 
@@ -287,50 +326,16 @@ def clear_all_scores():
     )
 
 
-def esc(value):
-
-    return html.escape(
-        str(
-            value
-            or ""
-        )
-    )
-
-
-def display(
-    value,
-    fallback="",
-):
-
-    text = str(
-        value
-        or ""
-    ).strip()
-
-    return (
-        text
-        if text
-        else fallback
-    )
-
-
-def agent_display_title(
+def agent_title(
     agent,
 ):
 
-    return display(
+    return text_or(
         agent.get(
             "title"
         ),
         f"Agent {agent['slot']}",
     )
-
-
-def logout():
-
-    st.session_state.clear()
-
-    st.rerun()
 
 
 def build_aggregate():
@@ -345,33 +350,50 @@ def build_aggregate():
         )
     )
 
-    base = pd.DataFrame(
-        {
-            "slot": [
-                a["slot"]
-                for a in agents
-            ],
+    base = (
+        pd.DataFrame(
+            {
+                "slot": [
+                    a[
+                        "slot"
+                    ]
+                    for a
+                    in agents
+                ],
 
-            "Agent": [
-                a["name"]
-                for a in agents
-            ],
+                "Agent": [
+                    a[
+                        "name"
+                    ]
+                    for a
+                    in agents
+                ],
 
-            "팀": [
-                a["team"]
-                for a in agents
-            ],
+                "팀": [
+                    a[
+                        "team"
+                    ]
+                    for a
+                    in agents
+                ],
 
-            "발표자": [
-                a["presenter"]
-                for a in agents
-            ],
+                "발표자": [
+                    a[
+                        "presenter"
+                    ]
+                    for a
+                    in agents
+                ],
 
-            "제목": [
-                a["title"]
-                for a in agents
-            ],
-        }
+                "제목": [
+                    a[
+                        "title"
+                    ]
+                    for a
+                    in agents
+                ],
+            }
+        )
     )
 
     if score_df.empty:
@@ -386,7 +408,9 @@ def build_aggregate():
             "제출인원",
         ]:
 
-            base[col] = 0
+            base[
+                col
+            ] = 0
 
         return (
             base,
@@ -463,17 +487,16 @@ def build_aggregate():
     )
 
 
-    out = base.merge(
-        agg,
-
-        left_on=
-            "slot",
-
-        right_on=
-            "agent_slot",
-
-        how=
-            "left",
+    out = (
+        base.merge(
+            agg,
+            left_on=
+                "slot",
+            right_on=
+                "agent_slot",
+            how=
+                "left",
+        )
     )
 
 
@@ -485,7 +508,6 @@ def build_aggregate():
             columns=[
                 "agent_slot"
             ],
-
             errors=
                 "ignore",
         )
@@ -527,8 +549,7 @@ def build_aggregate():
     )
 
 
-st.markdown(
-    """
+CSS = """
 <style>
 
 html,
@@ -539,7 +560,7 @@ body,
 
         radial-gradient(
             circle at 50% -10%,
-            rgba(53,95,160,.18),
+            rgba(54,98,165,.20),
             transparent 35%
         ),
 
@@ -562,7 +583,7 @@ body,
             2,
             8,
             15,
-            .64
+            .66
         );
 
     backdrop-filter:
@@ -576,17 +597,10 @@ body,
         1500px;
 
     padding-top:
-        .7rem;
+        .75rem;
 
     padding-bottom:
         3rem;
-}
-
-
-div[data-testid="stTabs"] button {
-
-    font-weight:
-        800;
 }
 
 
@@ -604,7 +618,12 @@ div[data-testid="stTabs"] button {
 }
 
 
-/* TOP */
+div[data-testid="stTabs"] button {
+
+    font-weight:
+        800;
+}
+
 
 .ax-brand {
 
@@ -669,7 +688,7 @@ div[data-testid="stTabs"] button {
 .ax-brand-title {
 
     font-size:
-        1.15rem;
+        1.18rem;
 
     font-weight:
         950;
@@ -698,8 +717,6 @@ div[data-testid="stTabs"] button {
         nowrap;
 }
 
-
-/* JUDGE AGENT */
 
 .ax-agent-card {
 
@@ -775,8 +792,6 @@ div[data-testid="stTabs"] button {
         #fff;
 }
 
-
-/* SUMMARY */
 
 .ax-summary {
 
@@ -861,8 +876,6 @@ div[data-testid="stTabs"] button {
         950;
 }
 
-
-/* AWARDS */
 
 .ax-awards {
 
@@ -976,7 +989,9 @@ div[data-testid="stTabs"] button {
         );
 
     filter:
-        blur(16px);
+        blur(
+            16px
+        );
 
     pointer-events:
         none;
@@ -989,7 +1004,9 @@ div[data-testid="stTabs"] button {
         7%;
 
     transform:
-        rotate(14deg);
+        rotate(
+            14deg
+        );
 }
 
 
@@ -999,7 +1016,9 @@ div[data-testid="stTabs"] button {
         7%;
 
     transform:
-        rotate(-14deg);
+        rotate(
+            -14deg
+        );
 }
 
 
@@ -1105,8 +1124,6 @@ div[data-testid="stTabs"] button {
         8px 0 24px;
 }
 
-
-/* PODIUM */
 
 .ax-podium-grid {
 
@@ -1467,8 +1484,6 @@ div[data-testid="stTabs"] button {
         #ffe5c7;
 }
 
-
-/* RESULT + COMMENT */
 
 .ax-section {
 
@@ -1891,8 +1906,6 @@ div[data-testid="stTabs"] button {
 }
 
 
-/* TABLET */
-
 @media
 (max-width:1099px) {
 
@@ -1954,8 +1967,6 @@ div[data-testid="stTabs"] button {
     }
 }
 
-
-/* MOBILE */
 
 @media
 (max-width:699px) {
@@ -2032,7 +2043,8 @@ div[data-testid="stTabs"] button {
     }
 
 
-    .gold .ax-stage {
+    .gold
+    .ax-stage {
 
         height:
             62px !important;
@@ -2069,7 +2081,11 @@ div[data-testid="stTabs"] button {
 }
 
 </style>
-""",
+"""
+
+
+st.markdown(
+    CSS,
     unsafe_allow_html=True,
 )
 
@@ -2079,13 +2095,13 @@ def render_brand(
 ):
 
     who = (
-        f"접속자 · {esc(user)}"
+        f"접속자 · {e(user)}"
         if user
         else
         "모바일 실시간 채점 시스템"
     )
 
-    st.markdown(
+    html_block(
         f"""
         <div class="ax-brand">
 
@@ -2100,8 +2116,7 @@ def render_brand(
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -2109,31 +2124,30 @@ def render_agent_card(
     agent,
 ):
 
-    st.markdown(
+    html_block(
         f"""
         <div class="ax-agent-card">
 
             <div class="ax-agent-title">
-                {esc(agent_display_title(agent))}
+                {e(agent_title(agent))}
             </div>
 
             <div class="ax-agent-meta">
 
                 <span>
                     <b>팀</b>
-                    {esc(display(agent.get("team"), "팀 미입력"))}
+                    {e(text_or(agent.get("team"), "팀 미입력"))}
                 </span>
 
                 <span>
                     <b>발표자</b>
-                    {esc(display(agent.get("presenter"), "발표자 미입력"))}
+                    {e(text_or(agent.get("presenter"), "발표자 미입력"))}
                 </span>
 
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -2144,71 +2158,56 @@ def award_entry(
 
     if row is None:
 
-        return """
-        <div class="ax-entry empty">
+        return (
+            '<div class="ax-entry empty">'
+            '<div class="ax-team">&nbsp;</div>'
+            '<div class="ax-presenter">&nbsp;</div>'
+            '<div class="ax-title">&nbsp;</div>'
+            '</div>'
+        )
 
-            <div class="ax-team">
-                &nbsp;
-            </div>
 
-            <div class="ax-presenter">
-                &nbsp;
-            </div>
-
-            <div class="ax-title">
-                &nbsp;
-            </div>
-
-        </div>
-        """
-
-    css = (
+    cls = (
         "ax-entry ax-gold-entry"
         if gold
         else
         "ax-entry"
     )
 
-    team = display(
+
+    team = text_or(
         row.get("팀"),
         "팀 미입력",
     )
 
-    presenter = display(
+
+    presenter = text_or(
         row.get("발표자"),
         "발표자 미입력",
     )
 
-    title = display(
+
+    title = text_or(
         row.get("제목"),
         f"Agent {int(row.get('slot', 0))}",
     )
 
-    return f"""
-    <div class="{css}">
 
-        <div class="ax-team">
-            {esc(team)}
-        </div>
-
-        <div class="ax-presenter">
-            {esc(presenter)}
-        </div>
-
-        <div class="ax-title">
-            {esc(title)}
-        </div>
-
-    </div>
-    """
+    return (
+        f'<div class="{cls}">'
+        f'<div class="ax-team">{e(team)}</div>'
+        f'<div class="ax-presenter">{e(presenter)}</div>'
+        f'<div class="ax-title">{e(title)}</div>'
+        '</div>'
+    )
 
 
-def render_result_summary(
+def render_summary(
     completed_judges,
     complete_count,
 ):
 
-    st.markdown(
+    html_block(
         f"""
         <div class="ax-summary">
 
@@ -2251,8 +2250,7 @@ def render_result_summary(
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -2261,24 +2259,29 @@ def render_awards(
 ):
 
     records = (
-        result.to_dict(
+        result
+        .to_dict(
             "records"
         )
     )
 
+
     first = (
         records[0]
-        if len(records) > 0
+        if records
         else None
     )
+
 
     silver = (
         records[1:3]
     )
 
+
     bronze = (
         records[3:5]
     )
+
 
     while len(
         silver
@@ -2288,6 +2291,7 @@ def render_awards(
             None
         )
 
+
     while len(
         bronze
     ) < 2:
@@ -2296,13 +2300,15 @@ def render_awards(
             None
         )
 
-    st.markdown(
+
+    html_block(
         f"""
         <div class="ax-awards">
 
             <div class="ax-awards-kicker">
                 DIFFUSION AX CONTEST
             </div>
+
 
             <div class="ax-awards-title">
 
@@ -2313,6 +2319,7 @@ def render_awards(
                 </span>
 
             </div>
+
 
             <div class="ax-awards-sub">
                 혁신의 아이디어가 더 나은 현장을 만듭니다
@@ -2343,13 +2350,9 @@ def render_awards(
 
                     <div class="ax-entry-list">
 
-                        {award_entry(
-                            silver[0]
-                        )}
+                        {award_entry(silver[0])}
 
-                        {award_entry(
-                            silver[1]
-                        )}
+                        {award_entry(silver[1])}
 
                     </div>
 
@@ -2418,13 +2421,9 @@ def render_awards(
 
                     <div class="ax-entry-list">
 
-                        {award_entry(
-                            bronze[0]
-                        )}
+                        {award_entry(bronze[0])}
 
-                        {award_entry(
-                            bronze[1]
-                        )}
+                        {award_entry(bronze[1])}
 
                     </div>
 
@@ -2435,11 +2434,11 @@ def render_awards(
 
                 </div>
 
+
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -2447,15 +2446,20 @@ def render_result_table(
     result,
 ):
 
-    rows_html = []
+    rows = []
+
 
     for _, row in (
-        result.iterrows()
+        result
+        .iterrows()
     ):
 
         rank = int(
-            row["순위"]
+            row[
+                "순위"
+            ]
         )
+
 
         if rank == 1:
 
@@ -2470,6 +2474,7 @@ def render_result_table(
             row_class = (
                 "rank1"
             )
+
 
         elif rank in (
             2,
@@ -2488,6 +2493,7 @@ def render_result_table(
                 ""
             )
 
+
         else:
 
             rank_class = (
@@ -2503,112 +2509,60 @@ def render_result_table(
             )
 
 
-        rows_html.append(
+        rows.append(
             f"""
             <tr class="{row_class}">
 
                 <td>
-
                     <span class="ax-rank {rank_class}">
                         {rank}
                     </span>
-
                 </td>
-
 
                 <td class="ax-team-cell">
-
-                    {esc(
-                        display(
-                            row["팀"],
-                            "",
-                        )
-                    )}
-
+                    {e(text_or(row["팀"]))}
                 </td>
-
 
                 <td>
-
-                    {esc(
-                        display(
-                            row["발표자"],
-                            "",
-                        )
-                    )}
-
+                    {e(text_or(row["발표자"]))}
                 </td>
-
 
                 <td class="ax-left">
-
-                    {esc(
-                        display(
-                            row["제목"],
-                            "",
-                        )
-                    )}
-
+                    {e(text_or(row["제목"]))}
                 </td>
-
 
                 <td>
-
                     <b>
-                        {int(
-                            row["최종점수"]
-                        )}
+                        {int(row["최종점수"])}
                     </b>
-
                 </td>
-
 
                 <td>
                     {award}
                 </td>
 
-
                 <td>
-
-                    {int(
-                        row["제출인원"]
-                    )}/9
-
+                    {int(row["제출인원"])}/9
                 </td>
 
-
                 <td>
-                    {int(
-                        row["현업문제"]
-                    )}
+                    {int(row["현업문제"])}
                 </td>
 
-
                 <td>
-                    {int(
-                        row["업무효과"]
-                    )}
+                    {int(row["업무효과"])}
                 </td>
 
-
                 <td>
-                    {int(
-                        row["완성도"]
-                    )}
+                    {int(row["완성도"])}
                 </td>
 
-
                 <td>
-                    {int(
-                        row["활용편의"]
-                    )}
+                    {int(row["활용편의"])}
                 </td>
 
-
                 <td>
-                    {int(
-                        row["확산가능"]
-                    )}
+                    {int(row["확산가능"])}
                 </td>
 
             </tr>
@@ -2616,7 +2570,7 @@ def render_result_table(
         )
 
 
-    st.markdown(
+    html_block(
         f"""
         <div class="ax-section">
 
@@ -2659,9 +2613,7 @@ def render_result_table(
 
                     <tbody>
 
-                        {''.join(
-                            rows_html
-                        )}
+                        {''.join(rows)}
 
                     </tbody>
 
@@ -2670,8 +2622,7 @@ def render_result_table(
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -2682,7 +2633,7 @@ def render_comments(
 
     if comments_df.empty:
 
-        st.markdown(
+        html_block(
             """
             <div class="ax-section">
 
@@ -2698,8 +2649,7 @@ def render_comments(
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
         return
@@ -2708,18 +2658,23 @@ def render_comments(
     agent_map = {
 
         int(
-            row["slot"]
+            row[
+                "slot"
+            ]
         ):
         {
             "team":
-                display(
-                    row["팀"],
-                    "",
+                text_or(
+                    row[
+                        "팀"
+                    ]
                 ),
 
             "title":
-                display(
-                    row["제목"],
+                text_or(
+                    row[
+                        "제목"
+                    ],
                     f"Agent {int(row['slot'])}",
                 ),
         }
@@ -2730,7 +2685,8 @@ def render_comments(
 
 
     comments = (
-        comments_df.copy()
+        comments_df
+        .copy()
     )
 
 
@@ -2769,7 +2725,8 @@ def render_comments(
 
 
     for _, row in (
-        comments.iterrows()
+        comments
+        .iterrows()
     ):
 
         slot = int(
@@ -2793,33 +2750,31 @@ def render_comments(
         )
 
 
-        champion = (
-            " champion"
-
-            if row[
+        is_champion = (
+            row[
                 "judge"
             ]
             == "DIFF_CHAMPION"
+        )
 
+
+        cls = (
+            " champion"
+            if is_champion
             else ""
         )
 
 
         crown = (
             "👑 "
-
-            if row[
-                "judge"
-            ]
-            == "DIFF_CHAMPION"
-
+            if is_champion
             else ""
         )
 
 
         cards.append(
             f"""
-            <div class="ax-comment{champion}">
+            <div class="ax-comment{cls}">
 
                 <div class="ax-comment-top">
 
@@ -2827,30 +2782,18 @@ def render_comments(
 
                         {crown}
 
-                        {esc(
-                            row[
-                                "judge"
-                            ]
-                        )}
+                        {e(row["judge"])}
 
                     </div>
 
 
                     <div class="ax-agent">
 
-                        {esc(
-                            info[
-                                "team"
-                            ]
-                        )}
+                        {e(info["team"])}
 
                         <br>
 
-                        {esc(
-                            info[
-                                "title"
-                            ]
-                        )}
+                        {e(info["title"])}
 
                     </div>
 
@@ -2859,11 +2802,7 @@ def render_comments(
 
                 <div class="ax-comment-body">
 
-                    {esc(
-                        row[
-                            "comment"
-                        ]
-                    )}
+                    {e(row["comment"])}
 
                 </div>
 
@@ -2871,28 +2810,13 @@ def render_comments(
                 <div class="ax-comment-score">
 
                     원점수
-
-                    {int(
-                        row[
-                            "total"
-                        ]
-                    )}/25
+                    {int(row["total"])}/25
 
                     · 가중치
-
-                    ×{int(
-                        row[
-                            "weight"
-                        ]
-                    )}
+                    ×{int(row["weight"])}
 
                     · 반영
-
-                    {int(
-                        row[
-                            "weighted_total"
-                        ]
-                    )}점
+                    {int(row["weighted_total"])}점
 
                 </div>
 
@@ -2901,7 +2825,7 @@ def render_comments(
         )
 
 
-    st.markdown(
+    html_block(
         f"""
         <div class="ax-section">
 
@@ -2922,22 +2846,20 @@ def render_comments(
 
             <div class="ax-comments">
 
-                {''.join(
-                    cards
-                )}
+                {''.join(cards)}
 
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
-if (
-    "user"
-    not in st.session_state
-):
+# ------------------------------------------------------------
+# LOGIN
+# ------------------------------------------------------------
+
+if "user" not in st.session_state:
 
     render_brand()
 
@@ -2959,6 +2881,7 @@ if (
             "### 🏆 DIFFUSION AX 경진대회"
         )
 
+
         st.caption(
             "심사위원 또는 MASTER 계정으로 로그인하세요."
         )
@@ -2975,9 +2898,8 @@ if (
                         USERS.keys()
                     ),
                     index=None,
-                    placeholder=(
-                        "접속자명을 선택하세요"
-                    ),
+                    placeholder=
+                        "접속자명을 선택하세요",
                 )
             )
 
@@ -2985,10 +2907,10 @@ if (
             password = (
                 st.text_input(
                     "비밀번호",
-                    type="password",
-                    placeholder=(
-                        "비밀번호 입력"
-                    ),
+                    type=
+                        "password",
+                    placeholder=
+                        "비밀번호 입력",
                 )
             )
 
@@ -2996,7 +2918,8 @@ if (
             submitted = (
                 st.form_submit_button(
                     "로그인",
-                    use_container_width=True,
+                    use_container_width=
+                        True,
                 )
             )
 
@@ -3004,7 +2927,8 @@ if (
         if submitted:
 
             if (
-                username in USERS
+                username
+                in USERS
 
                 and
 
@@ -3022,13 +2946,16 @@ if (
 
                 st.session_state[
                     "role"
-                ] = USERS[
-                    username
-                ][
-                    "role"
-                ]
+                ] = (
+                    USERS[
+                        username
+                    ][
+                        "role"
+                    ]
+                )
 
                 st.rerun()
+
 
             else:
 
@@ -3045,6 +2972,7 @@ user = (
         "user"
     ]
 )
+
 
 role = (
     st.session_state[
@@ -3079,6 +3007,10 @@ with logout_col:
         logout()
 
 
+# ------------------------------------------------------------
+# JUDGE
+# ------------------------------------------------------------
+
 if role == "judge":
 
     weight = (
@@ -3110,16 +3042,12 @@ if role == "judge":
 
     agent_map = {
 
-        (
-            f"{a['slot']}. "
-            f"{agent_display_title(a)}"
-        ):
+        f"{a['slot']}. {agent_title(a)}":
             a[
                 "slot"
             ]
 
-        for a
-        in agents
+        for a in agents
     }
 
 
@@ -3143,7 +3071,9 @@ if role == "judge":
     selected_agent = (
         next(
             a
-            for a in agents
+
+            for a
+            in agents
 
             if int(
                 a[
@@ -3177,6 +3107,7 @@ if role == "judge":
         3,
         3,
     ]
+
 
     old_comment = ""
 
@@ -3234,6 +3165,7 @@ if role == "judge":
                 f"**{i + 1}. {name}**"
             )
 
+
             st.caption(
                 description
             )
@@ -3252,7 +3184,8 @@ if role == "judge":
                     index=
                         defaults[i]
                         - 1,
-                    horizontal=True,
+                    horizontal=
+                        True,
                     label_visibility=
                         "collapsed",
                     key=
@@ -3275,7 +3208,8 @@ if role == "judge":
         submit_score = (
             st.form_submit_button(
                 "✅ 점수 제출 / 수정",
-                use_container_width=True,
+                use_container_width=
+                    True,
             )
         )
 
@@ -3297,18 +3231,22 @@ if role == "judge":
                 comment,
             )
 
+
             st.success(
                 f"{selected_label} 채점 완료 · {sum(values)}/25점"
             )
 
-        except Exception as e:
+
+        except Exception as ex:
 
             st.error(
                 "저장 중 오류가 발생했습니다. 다시 제출해 주세요."
             )
 
             st.caption(
-                str(e)
+                str(
+                    ex
+                )
             )
 
 
@@ -3352,14 +3290,16 @@ if role == "judge":
     st.stop()
 
 
+# ------------------------------------------------------------
+# MASTER
+# ------------------------------------------------------------
+
 st.success(
     "MASTER 관리자 모드 · 실시간 집계"
 )
 
 
-tab_result,
-tab_status,
-tab_settings = (
+tab_result, tab_status, tab_settings = (
     st.tabs(
         [
             "🏆 결과 보기",
@@ -3408,7 +3348,9 @@ with tab_result:
             "순위",
             range(
                 1,
-                len(result)
+                len(
+                    result
+                )
                 + 1,
             ),
         )
@@ -3465,12 +3407,11 @@ with tab_result:
                 )
                 == 5
 
-                for j
-                in JUDGES
+                for j in JUDGES
             )
 
 
-        render_result_summary(
+        render_summary(
             completed_judges,
             complete_count,
         )
@@ -3514,7 +3455,8 @@ with tab_result:
         ):
 
             comments_df = (
-                score_df.copy()
+                score_df
+                .copy()
             )
 
 
@@ -3572,18 +3514,13 @@ with tab_result:
 
 
         st.download_button(
-
             "⬇️ 최종 결과 CSV 다운로드",
-
             data=
                 csv,
-
             file_name=
                 "DIFFUSION_AX_최종결과.csv",
-
             mime=
                 "text/csv",
-
             use_container_width=
                 True,
         )
@@ -3617,10 +3554,8 @@ with tab_status:
         for judge in JUDGES:
 
             row = {
-
                 "심사위원":
                     judge,
-
                 "가중치":
                     USERS[
                         judge
@@ -3662,11 +3597,12 @@ with tab_status:
                                 ]
                             )
                         )
+
                     ).any()
 
 
                 row[
-                    agent_display_title(
+                    agent_title(
                         agent
                     )
                 ] = (
@@ -3695,8 +3631,10 @@ with tab_status:
             pd.DataFrame(
                 rows
             ),
-            use_container_width=True,
-            hide_index=True,
+            use_container_width=
+                True,
+            hide_index=
+                True,
         )
 
 
@@ -3789,8 +3727,7 @@ with tab_settings:
             )
 
 
-            c1,
-            c2 = (
+            c1, c2 = (
                 st.columns(
                     2
                 )
@@ -3849,16 +3786,12 @@ with tab_settings:
             edited[
                 slot
             ] = {
-
                 "name":
                     name,
-
                 "team":
                     team,
-
                 "presenter":
                     presenter,
-
                 "title":
                     title,
             }
@@ -3870,7 +3803,8 @@ with tab_settings:
         save_agents = (
             st.form_submit_button(
                 "💾 발표 정보 저장",
-                use_container_width=True,
+                use_container_width=
+                    True,
             )
         )
 
@@ -3909,14 +3843,16 @@ with tab_settings:
             st.rerun()
 
 
-        except Exception as e:
+        except Exception as ex:
 
             st.error(
                 "발표 정보 저장에 실패했습니다."
             )
 
             st.caption(
-                str(e)
+                str(
+                    ex
+                )
             )
 
 
@@ -3939,25 +3875,32 @@ with tab_settings:
         "전체 점수 초기화",
         disabled=
             not confirm,
-        use_container_width=True,
+        use_container_width=
+            True,
     ):
 
         try:
 
             clear_all_scores()
 
+
             st.success(
                 "모든 점수가 초기화되었습니다."
             )
 
+
             st.rerun()
 
-        except Exception as e:
+
+        except Exception as ex:
 
             st.error(
                 "초기화에 실패했습니다."
             )
 
+
             st.caption(
-                str(e)
+                str(
+                    ex
+                )
             )
