@@ -6,9 +6,6 @@ import streamlit as st
 from supabase import create_client
 
 
-# ------------------------------------------------------------
-# PAGE
-# ------------------------------------------------------------
 st.set_page_config(
     page_title="DIFFUSION AX CONTEST",
     page_icon="🏆",
@@ -17,9 +14,6 @@ st.set_page_config(
 )
 
 
-# ------------------------------------------------------------
-# USERS
-# ------------------------------------------------------------
 USERS = {
     "DRAM_ALD": {"password": "1026", "role": "judge", "weight": 1},
     "DRAM_FUR": {"password": "2026", "role": "judge", "weight": 1},
@@ -33,7 +27,6 @@ USERS = {
     "MASTER": {"password": "2006", "role": "admin", "weight": 0},
 }
 
-# 제출현황 / 코멘트 정렬 순서
 JUDGES = [
     "DIFF_CHAMPION",
     "DIFF_STRAT",
@@ -46,9 +39,15 @@ JUDGES = [
     "NAND_IMP",
 ]
 
-JUDGE_ORDER = {name: i for i, name in enumerate(JUDGES)}
+JUDGE_ORDER = {
+    name: i
+    for i, name in enumerate(JUDGES)
+}
 
-MAX_TOTAL = 25 * sum(USERS[u]["weight"] for u in JUDGES)
+MAX_TOTAL = 25 * sum(
+    USERS[u]["weight"]
+    for u in JUDGES
+)
 
 CRITERIA = [
     (
@@ -74,9 +73,6 @@ CRITERIA = [
 ]
 
 
-# ------------------------------------------------------------
-# DB
-# ------------------------------------------------------------
 @st.cache_resource
 def get_db():
     return create_client(
@@ -89,21 +85,31 @@ db = get_db()
 
 
 def get_agents():
+
     rows = (
         db.table("agents")
-        .select("slot,name,team,presenter,title")
+        .select(
+            "slot,name,team,presenter,title"
+        )
         .order("slot")
         .execute()
         .data
         or []
     )
 
-    by_slot = {int(r["slot"]): r for r in rows}
+    by_slot = {
+        int(r["slot"]): r
+        for r in rows
+    }
 
     result = []
 
     for slot in range(1, 6):
-        r = by_slot.get(slot, {})
+
+        r = by_slot.get(
+            slot,
+            {},
+        )
 
         result.append(
             {
@@ -131,6 +137,7 @@ def get_agents():
 
 
 def get_all_scores():
+
     return (
         db.table("scores")
         .select("*")
@@ -140,18 +147,32 @@ def get_all_scores():
     )
 
 
-def get_score(judge, slot):
+def get_score(
+    judge,
+    slot,
+):
+
     rows = (
         db.table("scores")
         .select("*")
-        .eq("judge", judge)
-        .eq("agent_slot", slot)
+        .eq(
+            "judge",
+            judge,
+        )
+        .eq(
+            "agent_slot",
+            slot,
+        )
         .execute()
         .data
         or []
     )
 
-    return rows[0] if rows else None
+    return (
+        rows[0]
+        if rows
+        else None
+    )
 
 
 def save_score(
@@ -160,27 +181,49 @@ def save_score(
     values,
     comment,
 ):
-    weight = USERS[judge]["weight"]
-    total = sum(values)
 
-    db.table("scores").upsert(
+    weight = (
+        USERS[judge][
+            "weight"
+        ]
+    )
+
+    total = sum(
+        values
+    )
+
+    db.table(
+        "scores"
+    ).upsert(
         {
             "judge": judge,
             "agent_slot": slot,
+
             "c1": values[0],
             "c2": values[1],
             "c3": values[2],
             "c4": values[3],
             "c5": values[4],
+
             "total": total,
+
             "weight": weight,
-            "weighted_total": total * weight,
-            "comment": comment.strip(),
-            "updated_at": datetime.now(
-                timezone.utc
-            ).isoformat(),
+
+            "weighted_total":
+                total * weight,
+
+            "comment":
+                comment.strip(),
+
+            "updated_at":
+                datetime.now(
+                    timezone.utc
+                ).isoformat(),
         },
-        on_conflict="judge,agent_slot",
+
+        on_conflict=
+            "judge,agent_slot",
+
     ).execute()
 
 
@@ -191,78 +234,115 @@ def update_agent(
     presenter,
     title,
 ):
-    db.table("agents").upsert(
+
+    db.table(
+        "agents"
+    ).upsert(
         {
-            "slot": slot,
-            "name": (
-                name or ""
-            ).strip()
-            or f"Agent {slot}",
-            "team": (
-                team or ""
-            ).strip(),
-            "presenter": (
-                presenter or ""
-            ).strip(),
-            "title": (
-                title or ""
-            ).strip(),
+            "slot":
+                slot,
+
+            "name":
+                (
+                    name
+                    or ""
+                ).strip()
+                or f"Agent {slot}",
+
+            "team":
+                (
+                    team
+                    or ""
+                ).strip(),
+
+            "presenter":
+                (
+                    presenter
+                    or ""
+                ).strip(),
+
+            "title":
+                (
+                    title
+                    or ""
+                ).strip(),
         },
-        on_conflict="slot",
+
+        on_conflict=
+            "slot",
+
     ).execute()
 
 
 def clear_all_scores():
+
     (
         db.table("scores")
         .delete()
-        .neq("judge", "__never__")
+        .neq(
+            "judge",
+            "__never__",
+        )
         .execute()
     )
 
 
-# ------------------------------------------------------------
-# HELPERS
-# ------------------------------------------------------------
 def esc(value):
+
     return html.escape(
-        str(value or "")
+        str(
+            value
+            or ""
+        )
     )
 
 
-def logout():
-    st.session_state.clear()
-    st.rerun()
-
-
-def show_value(
+def display(
     value,
     fallback="",
 ):
-    value = str(
-        value or ""
+
+    text = str(
+        value
+        or ""
     ).strip()
 
     return (
-        value
-        if value
+        text
+        if text
         else fallback
     )
 
 
-def agent_display_title(agent):
-    return show_value(
-        agent.get("title"),
+def agent_display_title(
+    agent,
+):
+
+    return display(
+        agent.get(
+            "title"
+        ),
         f"Agent {agent['slot']}",
     )
 
 
+def logout():
+
+    st.session_state.clear()
+
+    st.rerun()
+
+
 def build_aggregate():
 
-    agents = get_agents()
+    agents = (
+        get_agents()
+    )
 
-    score_df = pd.DataFrame(
-        get_all_scores()
+    score_df = (
+        pd.DataFrame(
+            get_all_scores()
+        )
     )
 
     base = pd.DataFrame(
@@ -271,18 +351,22 @@ def build_aggregate():
                 a["slot"]
                 for a in agents
             ],
+
             "Agent": [
                 a["name"]
                 for a in agents
             ],
+
             "팀": [
                 a["team"]
                 for a in agents
             ],
+
             "발표자": [
                 a["presenter"]
                 for a in agents
             ],
+
             "제목": [
                 a["title"]
                 for a in agents
@@ -301,6 +385,7 @@ def build_aggregate():
             "최종점수",
             "제출인원",
         ]:
+
             base[col] = 0
 
         return (
@@ -308,48 +393,68 @@ def build_aggregate():
             score_df,
         )
 
+
     for i in range(
         1,
         6,
     ):
+
         score_df[
             f"wc{i}"
         ] = (
-            score_df[f"c{i}"]
-            * score_df["weight"]
+
+            score_df[
+                f"c{i}"
+            ]
+
+            *
+
+            score_df[
+                "weight"
+            ]
         )
 
+
     agg = (
+
         score_df
+
         .groupby(
             "agent_slot",
             as_index=False,
         )
+
         .agg(
             현업문제=(
                 "wc1",
                 "sum",
             ),
+
             업무효과=(
                 "wc2",
                 "sum",
             ),
+
             완성도=(
                 "wc3",
                 "sum",
             ),
+
             활용편의=(
                 "wc4",
                 "sum",
             ),
+
             확산가능=(
                 "wc5",
                 "sum",
             ),
+
             최종점수=(
                 "weighted_total",
                 "sum",
             ),
+
             제출인원=(
                 "judge",
                 "nunique",
@@ -357,23 +462,39 @@ def build_aggregate():
         )
     )
 
+
     out = base.merge(
         agg,
-        left_on="slot",
-        right_on="agent_slot",
-        how="left",
+
+        left_on=
+            "slot",
+
+        right_on=
+            "agent_slot",
+
+        how=
+            "left",
     )
 
+
     out = (
+
         out
+
         .drop(
             columns=[
                 "agent_slot"
             ],
-            errors="ignore",
+
+            errors=
+                "ignore",
         )
-        .fillna(0)
+
+        .fillna(
+            0
+        )
     )
+
 
     numeric = [
         "현업문제",
@@ -385,10 +506,20 @@ def build_aggregate():
         "제출인원",
     ]
 
-    out[numeric] = (
-        out[numeric]
-        .astype(int)
+
+    out[
+        numeric
+    ] = (
+
+        out[
+            numeric
+        ]
+
+        .astype(
+            int
+        )
     )
+
 
     return (
         out,
@@ -396,60 +527,9 @@ def build_aggregate():
     )
 
 
-# ------------------------------------------------------------
-# GLOBAL STYLE
-# ------------------------------------------------------------
 st.markdown(
     """
 <style>
-
-:root {
-
-    --bg: #04101f;
-
-    --panel:
-        rgba(
-            8,
-            24,
-            45,
-            .88
-        );
-
-    --panel2:
-        rgba(
-            14,
-            34,
-            61,
-            .78
-        );
-
-    --line:
-        rgba(
-            133,
-            174,
-            226,
-            .18
-        );
-
-    --text: #f5f7fb;
-
-    --muted: #9fb1c9;
-
-    --blue: #70a7ff;
-
-    --gold1: #fff0a8;
-
-    --gold2: #d79a16;
-
-    --silver1: #f5f7fa;
-
-    --silver2: #8b98aa;
-
-    --bronze1: #f4c08a;
-
-    --bronze2: #9a4f1b;
-}
-
 
 html,
 body,
@@ -459,23 +539,19 @@ body,
 
         radial-gradient(
             circle at 50% -10%,
-            rgba(
-                62,
-                113,
-                184,
-                .18
-            ),
-            transparent 38%
+            rgba(53,95,160,.18),
+            transparent 35%
         ),
 
         linear-gradient(
             180deg,
-            #051426 0%,
-            #03101d 60%,
-            #020b14 100%
+            #071522 0%,
+            #04101b 58%,
+            #020911 100%
         );
 
-    color: var(--text);
+    color:
+        #f5f7fb;
 }
 
 
@@ -484,13 +560,13 @@ body,
     background:
         rgba(
             2,
-            10,
-            20,
-            .70
+            8,
+            15,
+            .64
         );
 
     backdrop-filter:
-        blur(10px);
+        blur(8px);
 }
 
 
@@ -500,7 +576,7 @@ body,
         1500px;
 
     padding-top:
-        .8rem;
+        .7rem;
 
     padding-bottom:
         3rem;
@@ -511,31 +587,6 @@ div[data-testid="stTabs"] button {
 
     font-weight:
         800;
-
-    font-size:
-        1rem;
-}
-
-
-div[data-testid="stMetric"] {
-
-    border:
-        1px solid
-        var(--line);
-
-    background:
-        rgba(
-            12,
-            30,
-            54,
-            .60
-        );
-
-    padding:
-        12px 14px;
-
-    border-radius:
-        16px;
 }
 
 
@@ -543,7 +594,7 @@ div[data-testid="stMetric"] {
 .stDownloadButton button {
 
     min-height:
-        46px;
+        44px;
 
     border-radius:
         12px;
@@ -553,11 +604,9 @@ div[data-testid="stMetric"] {
 }
 
 
-/* ==========================================================
-   TOP BRAND
-   ========================================================== */
+/* TOP */
 
-.brandbar {
+.ax-brand {
 
     display:
         flex;
@@ -569,35 +618,40 @@ div[data-testid="stMetric"] {
         space-between;
 
     gap:
-        18px;
+        12px;
 
     padding:
-        13px 18px;
+        13px 16px;
 
-    margin:
-        0 0 14px 0;
-
-    border:
-        1px solid
-        var(--line);
+    margin-bottom:
+        14px;
 
     border-radius:
         16px;
+
+    border:
+        1px solid
+        rgba(
+            130,
+            164,
+            206,
+            .18
+        );
 
     background:
         linear-gradient(
             90deg,
             rgba(
-                8,
-                28,
-                52,
-                .97
+                12,
+                31,
+                53,
+                .96
             ),
             rgba(
-                4,
+                5,
                 17,
-                32,
-                .92
+                30,
+                .95
             )
         );
 
@@ -612,181 +666,91 @@ div[data-testid="stMetric"] {
 }
 
 
-.brand-left {
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        10px;
-
-    min-width:
-        0;
-}
-
-
-.brand-main {
+.ax-brand-title {
 
     font-size:
-        1.28rem;
+        1.15rem;
 
     font-weight:
         950;
 
-    letter-spacing:
-        .02em;
+    white-space:
+        nowrap;
+}
+
+
+.ax-brand-title span {
+
+    color:
+        #7eaaff;
+}
+
+
+.ax-brand-user {
+
+    color:
+        #9dafc6;
+
+    font-size:
+        .86rem;
 
     white-space:
         nowrap;
 }
 
 
-.brand-main span {
+/* JUDGE AGENT */
 
-    color:
-        #78a7ff;
-}
-
-
-.brand-chip {
-
-    font-size:
-        .72rem;
-
-    font-weight:
-        900;
-
-    padding:
-        3px 8px;
-
-    border-radius:
-        8px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #4778ff,
-            #7e55ff
-        );
-
-    color:
-        white;
-}
-
-
-.brand-user {
-
-    color:
-        var(--muted);
-
-    font-size:
-        .9rem;
-
-    white-space:
-        nowrap;
-}
-
-
-/* ==========================================================
-   LOGIN / JUDGE CARD
-   ========================================================== */
-
-.glass-card {
-
-    border:
-        1px solid
-        var(--line);
-
-    border-radius:
-        18px;
-
-    padding:
-        18px;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(
-                13,
-                34,
-                61,
-                .90
-            ),
-            rgba(
-                5,
-                18,
-                34,
-                .90
-            )
-        );
-
-    box-shadow:
-        0 18px 45px
-        rgba(
-            0,
-            0,
-            0,
-            .25
-        );
-}
-
-
-.agent-card {
+.ax-agent-card {
 
     border:
         1px solid
         rgba(
-            92,
-            147,
-            220,
-            .28
+            95,
+            143,
+            205,
+            .24
         );
 
     border-radius:
-        18px;
+        16px;
 
     padding:
-        16px 18px;
+        14px 16px;
 
     margin:
-        8px 0 16px 0;
+        8px 0 15px;
 
     background:
         linear-gradient(
             135deg,
             rgba(
-                18,
-                47,
-                82,
+                17,
+                45,
+                76,
                 .92
             ),
             rgba(
                 8,
-                26,
-                49,
+                25,
+                45,
                 .92
             )
         );
 }
 
 
-.agent-card-title {
+.ax-agent-title {
 
     font-size:
-        1.22rem;
+        1.12rem;
 
     font-weight:
         950;
-
-    line-height:
-        1.35;
 }
 
 
-.agent-card-meta {
+.ax-agent-meta {
 
     display:
         flex;
@@ -798,25 +762,109 @@ div[data-testid="stMetric"] {
         wrap;
 
     margin-top:
-        9px;
+        8px;
 
     color:
-        #b9c8da;
+        #b8c6d8;
 }
 
 
-.agent-card-meta b {
+.ax-agent-meta b {
 
     color:
         #fff;
 }
 
 
-/* ==========================================================
-   AWARDS STAGE
-   ========================================================== */
+/* SUMMARY */
 
-.awards-stage {
+.ax-summary {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap:
+        10px;
+
+    margin:
+        8px 0 14px;
+}
+
+
+.ax-metric {
+
+    border:
+        1px solid
+        rgba(
+            130,
+            164,
+            206,
+            .18
+        );
+
+    border-radius:
+        15px;
+
+    padding:
+        13px 15px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(
+                14,
+                34,
+                57,
+                .94
+            ),
+            rgba(
+                6,
+                20,
+                36,
+                .94
+            )
+        );
+}
+
+
+.ax-metric-label {
+
+    color:
+        #9fb0c6;
+
+    font-size:
+        .73rem;
+
+    font-weight:
+        700;
+}
+
+
+.ax-metric-value {
+
+    margin-top:
+        4px;
+
+    font-size:
+        1.24rem;
+
+    font-weight:
+        950;
+}
+
+
+/* AWARDS */
+
+.ax-awards {
 
     position:
         relative;
@@ -824,88 +872,76 @@ div[data-testid="stMetric"] {
     overflow:
         hidden;
 
+    border-radius:
+        24px;
+
+    padding:
+        26px 18px 20px;
+
     border:
         1px solid
         rgba(
-            216,
-            168,
-            59,
-            .24
+            225,
+            179,
+            58,
+            .22
         );
-
-    border-radius:
-        26px;
-
-    padding:
-        28px 22px 22px 22px;
-
-    margin:
-        18px 0 24px 0;
 
     background:
 
         radial-gradient(
-            ellipse at 18% 0%,
+            circle at 50% 0%,
             rgba(
-                255,
-                232,
-                170,
-                .17
+                79,
+                135,
+                213,
+                .18
             ),
-            transparent 26%
+            transparent 28%
         ),
 
         radial-gradient(
-            ellipse at 82% 0%,
+            circle at 18% 0%,
             rgba(
-                255,
-                232,
-                170,
-                .14
+                246,
+                214,
+                137,
+                .12
             ),
-            transparent 26%
+            transparent 24%
         ),
 
         radial-gradient(
-            ellipse at 50% 8%,
+            circle at 82% 0%,
             rgba(
-                99,
-                152,
-                255,
-                .15
+                246,
+                214,
+                137,
+                .10
             ),
-            transparent 30%
+            transparent 24%
         ),
 
         linear-gradient(
             180deg,
-            #071629 0%,
-            #06111f 68%,
-            #030913 100%
+            #0a1a2e 0%,
+            #071321 58%,
+            #040c16 100%
         );
 
     box-shadow:
-
-        0 30px 65px
+        0 26px 60px
         rgba(
             0,
             0,
             0,
-            .40
-        ),
-
-        inset 0 1px
-        rgba(
-            255,
-            255,
-            255,
-            .06
+            .34
         );
 }
 
 
-.awards-stage:before,
-.awards-stage:after {
+.ax-awards:before,
+.ax-awards:after {
 
     content:
         "";
@@ -914,79 +950,60 @@ div[data-testid="stMetric"] {
         absolute;
 
     top:
-        -120px;
+        -90px;
 
     width:
-        160px;
+        150px;
 
     height:
-        520px;
+        420px;
 
     background:
         linear-gradient(
             180deg,
             rgba(
                 255,
-                243,
-                200,
-                .26
+                245,
+                205,
+                .22
             ),
             rgba(
                 255,
-                243,
-                200,
+                245,
+                205,
                 0
             )
         );
 
     filter:
-        blur(12px);
-
-    transform:
-        rotate(14deg);
+        blur(16px);
 
     pointer-events:
         none;
 }
 
 
-.awards-stage:before {
+.ax-awards:before {
 
     left:
-        8%;
+        7%;
+
+    transform:
+        rotate(14deg);
 }
 
 
-.awards-stage:after {
+.ax-awards:after {
 
     right:
-        8%;
+        7%;
 
     transform:
         rotate(-14deg);
 }
 
 
-.awards-kicker {
-
-    text-align:
-        center;
-
-    color:
-        #c8d4e5;
-
-    font-size:
-        .82rem;
-
-    font-weight:
-        900;
-
-    letter-spacing:
-        .20em;
-}
-
-
-.awards-title {
+.ax-awards-kicker {
 
     position:
         relative;
@@ -997,53 +1014,66 @@ div[data-testid="stMetric"] {
     text-align:
         center;
 
-    font-weight:
-        1000;
-
     font-size:
-        clamp(
-            1.65rem,
-            3.8vw,
-            2.8rem
-        );
+        .72rem;
 
     letter-spacing:
-        .03em;
+        .22em;
 
-    line-height:
-        1.05;
-
-    margin:
-        5px 0 4px 0;
+    font-weight:
+        900;
 
     color:
-        #fff;
-
-    text-shadow:
-        0 6px 22px
-        rgba(
-            0,
-            0,
-            0,
-            .35
-        );
+        #bdcbe0;
 }
 
 
-.awards-title .goldword {
+.ax-awards-title {
+
+    position:
+        relative;
+
+    z-index:
+        2;
+
+    text-align:
+        center;
+
+    margin:
+        6px 0 2px;
+
+    font-size:
+        clamp(
+            1.55rem,
+            3.7vw,
+            2.65rem
+        );
+
+    font-weight:
+        1000;
+
+    line-height:
+        1;
+}
+
+
+.ax-awards-title span {
 
     display:
         block;
 
+    margin-top:
+        5px;
+
     font-size:
-        1.28em;
+        1.14em;
 
     background:
         linear-gradient(
             180deg,
-            #fff3b0 0%,
-            #f0bb46 42%,
-            #b66c08 100%
+            #fff1a6,
+            #e9b233 55%,
+            #9c6207
         );
 
     -webkit-background-clip:
@@ -1054,7 +1084,7 @@ div[data-testid="stMetric"] {
 }
 
 
-.awards-sub {
+.ax-awards-sub {
 
     position:
         relative;
@@ -1066,17 +1096,19 @@ div[data-testid="stMetric"] {
         center;
 
     color:
-        #b6c3d5;
+        #a9b8cc;
 
     font-size:
-        .92rem;
+        .83rem;
 
-    margin-bottom:
-        26px;
+    margin:
+        8px 0 24px;
 }
 
 
-.podium-wrap {
+/* PODIUM */
+
+.ax-podium-grid {
 
     position:
         relative;
@@ -1088,33 +1120,52 @@ div[data-testid="stMetric"] {
         grid;
 
     grid-template-columns:
-        1fr 1.12fr 1fr;
+        minmax(
+            0,
+            1fr
+        )
+        minmax(
+            0,
+            1.15fr
+        )
+        minmax(
+            0,
+            1fr
+        );
+
+    grid-template-areas:
+        "silver gold bronze";
 
     gap:
         14px;
 
     align-items:
         end;
-
-    max-width:
-        1200px;
-
-    margin:
-        0 auto;
 }
 
 
-.award-col {
+.ax-award-col.silver {
 
-    min-width:
-        0;
-
-    text-align:
-        center;
+    grid-area:
+        silver;
 }
 
 
-.award-head {
+.ax-award-col.gold {
+
+    grid-area:
+        gold;
+}
+
+
+.ax-award-col.bronze {
+
+    grid-area:
+        bronze;
+}
+
+
+.ax-award-head {
 
     display:
         flex;
@@ -1126,67 +1177,57 @@ div[data-testid="stMetric"] {
         center;
 
     gap:
-        8px;
+        7px;
+
+    font-weight:
+        950;
 
     margin-bottom:
         10px;
 
-    font-weight:
-        950;
+    text-align:
+        center;
 }
 
 
-.medal {
+.ax-medal {
 
     font-size:
-        1.8rem;
+        1.7rem;
 }
 
 
-.award-name {
+.ax-award-name {
 
     font-size:
-        clamp(
-            1rem,
-            2vw,
-            1.35rem
-        );
+        1.05rem;
 }
 
 
-.person-grid {
+.ax-award-count {
+
+    font-size:
+        .70rem;
+
+    color:
+        #9fb0c6;
+}
+
+
+.ax-entry-list {
 
     display:
         grid;
 
-    grid-template-columns:
-        repeat(
-            2,
-            minmax(
-                0,
-                1fr
-            )
-        );
-
     gap:
-        10px;
-
-    align-items:
-        stretch;
+        9px;
 }
 
 
-.gold .person-grid {
-
-    grid-template-columns:
-        1fr;
-}
-
-
-.person-card {
+.ax-entry {
 
     min-height:
-        118px;
+        104px;
 
     display:
         flex;
@@ -1198,30 +1239,30 @@ div[data-testid="stMetric"] {
         center;
 
     padding:
-        13px 10px;
+        13px 11px;
 
     border-radius:
         15px;
+
+    color:
+        #102033;
 
     background:
         linear-gradient(
             180deg,
             rgba(
+                245,
                 248,
-                250,
-                255,
-                .97
+                252,
+                .98
             ),
             rgba(
-                215,
-                226,
-                240,
-                .96
+                214,
+                225,
+                239,
+                .98
             )
         );
-
-    color:
-        #0b1727;
 
     border:
         1px solid
@@ -1229,11 +1270,40 @@ div[data-testid="stMetric"] {
             255,
             255,
             255,
-            .75
+            .72
         );
 
     box-shadow:
         0 10px 24px
+        rgba(
+            0,
+            0,
+            0,
+            .23
+        );
+}
+
+
+.ax-gold-entry {
+
+    min-height:
+        126px;
+
+    border:
+        2px solid
+        #efc351;
+
+    box-shadow:
+
+        0 0 30px
+        rgba(
+            240,
+            181,
+            44,
+            .24
+        ),
+
+        0 13px 30px
         rgba(
             0,
             0,
@@ -1243,129 +1313,62 @@ div[data-testid="stMetric"] {
 }
 
 
-.gold .person-card {
+.ax-entry.empty {
 
-    border:
-        2px solid
-        #f4c85a;
-
-    box-shadow:
-
-        0 0 0 1px
-        rgba(
-            255,
-            220,
-            115,
-            .18
-        ),
-
-        0 0 28px
-        rgba(
-            245,
-            177,
-            35,
-            .30
-        ),
-
-        0 14px 32px
-        rgba(
-            0,
-            0,
-            0,
-            .34
-        );
+    opacity:
+        .38;
 }
 
 
-.bronze .person-card {
-
-    border-color:
-        rgba(
-            244,
-            177,
-            112,
-            .8
-        );
-}
-
-
-.silver .person-card {
-
-    border-color:
-        rgba(
-            225,
-            233,
-            244,
-            .9
-        );
-}
-
-
-.person-team {
-
-    font-size:
-        1rem;
+.ax-team {
 
     font-weight:
         1000;
 
-    line-height:
-        1.2;
+    font-size:
+        1rem;
 
     overflow-wrap:
         anywhere;
 }
 
 
-.person-presenter {
-
-    margin-top:
-        5px;
+.ax-presenter {
 
     font-size:
-        .88rem;
+        .84rem;
 
     font-weight:
         800;
+
+    margin-top:
+        5px;
 }
 
 
-.person-title {
+.ax-title {
+
+    font-size:
+        .74rem;
+
+    color:
+        #526277;
 
     margin-top:
         6px;
 
-    font-size:
-        .76rem;
-
     line-height:
         1.35;
-
-    color:
-        #4d5d70;
-
-    word-break:
-        keep-all;
 }
 
 
-.person-empty {
-
-    opacity:
-        .55;
-}
-
-
-.podium-base {
-
-    position:
-        relative;
+.ax-stage {
 
     margin-top:
         9px;
 
     border-radius:
-        18px 18px 7px 7px;
+        16px 16px 7px 7px;
 
     display:
         flex;
@@ -1375,6 +1378,9 @@ div[data-testid="stMetric"] {
 
     justify-content:
         center;
+
+    font-size:
+        2rem;
 
     font-weight:
         1000;
@@ -1395,10 +1401,10 @@ div[data-testid="stMetric"] {
             255,
             255,
             255,
-            .32
+            .26
         ),
 
-        0 16px 28px
+        0 14px 28px
         rgba(
             0,
             0,
@@ -1408,135 +1414,105 @@ div[data-testid="stMetric"] {
 }
 
 
-.podium-base span {
-
-    font-size:
-        2.2rem;
-}
-
-
-.silver .podium-base {
+.silver .ax-stage {
 
     height:
-        78px;
-
-    color:
-        #f7fbff;
+        74px;
 
     background:
         linear-gradient(
             180deg,
-            #aeb9c7 0%,
-            #778496 48%,
-            #465366 100%
+            #b9c2ce,
+            #7d8999 52%,
+            #4d5968
         );
+
+    color:
+        #fff;
 }
 
 
-.gold .podium-base {
+.gold .ax-stage {
 
     height:
-        112px;
+        108px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #e8b735,
+            #bb790b 52%,
+            #744000
+        );
 
     color:
         #fff8cf;
-
-    background:
-        linear-gradient(
-            180deg,
-            #e8b52e 0%,
-            #b77408 48%,
-            #7d4700 100%
-        );
-
-    box-shadow:
-
-        0 0 34px
-        rgba(
-            234,
-            175,
-            41,
-            .25
-        ),
-
-        inset 0 1px
-        rgba(
-            255,
-            255,
-            255,
-            .4
-        ),
-
-        0 18px 34px
-        rgba(
-            0,
-            0,
-            0,
-            .34
-        );
 }
 
 
-.bronze .podium-base {
+.bronze .ax-stage {
 
     height:
-        62px;
-
-    color:
-        #ffe6ca;
+        58px;
 
     background:
         linear-gradient(
             180deg,
-            #c4793e 0%,
-            #8d481c 50%,
-            #593016 100%
+            #c87b3e,
+            #8e4c21 52%,
+            #5c3017
         );
+
+    color:
+        #ffe5c7;
 }
 
 
-/* ==========================================================
-   SECTION
-   ========================================================== */
+/* RESULT + COMMENT */
 
-.section-card {
+.ax-section {
+
+    margin-top:
+        18px;
 
     border:
         1px solid
-        var(--line);
+        rgba(
+            130,
+            164,
+            206,
+            .18
+        );
 
     border-radius:
         18px;
 
-    padding:
-        15px 16px;
-
-    margin:
-        14px 0;
-
     background:
         linear-gradient(
             180deg,
             rgba(
-                9,
-                27,
-                50,
-                .90
+                11,
+                28,
+                49,
+                .94
             ),
             rgba(
-                4,
-                16,
-                31,
-                .92
+                5,
+                18,
+                33,
+                .94
             )
         );
+
+    padding:
+        15px;
 }
 
 
-.section-title {
+.ax-section-title {
 
     font-size:
-        1.15rem;
+        1.08rem;
 
     font-weight:
         950;
@@ -1546,37 +1522,35 @@ div[data-testid="stMetric"] {
 }
 
 
-.section-title small {
+.ax-section-sub {
 
     font-size:
-        .75rem;
+        .72rem;
 
     color:
-        var(--muted);
-
-    font-weight:
-        600;
+        #9fb0c6;
 
     margin-left:
-        8px;
+        6px;
 }
 
 
-/* ==========================================================
-   RESULT TABLE
-   ========================================================== */
-
-.table-scroll {
+.ax-table-wrap {
 
     overflow-x:
         auto;
 
+    border-radius:
+        13px;
+
     border:
         1px solid
-        var(--line);
-
-    border-radius:
-        14px;
+        rgba(
+            130,
+            164,
+            206,
+            .18
+        );
 }
 
 
@@ -1586,7 +1560,7 @@ div[data-testid="stMetric"] {
         100%;
 
     min-width:
-        1000px;
+        980px;
 
     border-collapse:
         collapse;
@@ -1594,97 +1568,103 @@ div[data-testid="stMetric"] {
     background:
         rgba(
             4,
-            16,
-            30,
-            .78
+            15,
+            28,
+            .75
         );
 }
 
 
 .ax-table th {
 
+    background:
+        #112945;
+
+    color:
+        #d8e4f2;
+
     padding:
-        11px 9px;
+        10px 8px;
+
+    font-size:
+        .75rem;
 
     text-align:
         center;
 
-    font-size:
-        .78rem;
-
-    color:
-        #d5e2f1;
-
-    background:
-        rgba(
-            19,
-            45,
-            76,
-            .88
-        );
-
     border-bottom:
         1px solid
-        var(--line);
+        rgba(
+            130,
+            164,
+            206,
+            .18
+        );
+
+    white-space:
+        nowrap;
 }
 
 
 .ax-table td {
 
     padding:
-        11px 9px;
+        10px 8px;
+
+    font-size:
+        .81rem;
 
     text-align:
         center;
 
-    font-size:
-        .84rem;
-
     color:
-        #eef4fb;
+        #edf3fa;
 
     border-bottom:
         1px solid
         rgba(
-            133,
-            174,
-            226,
-            .10
+            143,
+            177,
+            221,
+            .09
         );
 }
 
 
-.ax-table tr:first-child td {
+.ax-table tr.rank1 td {
 
     background:
         linear-gradient(
             90deg,
             rgba(
-                201,
-                145,
-                20,
-                .12
+                217,
+                167,
+                40,
+                .13
             ),
             rgba(
-                201,
-                145,
-                20,
+                217,
+                167,
+                40,
                 .03
             )
         );
 }
 
 
-.rank-badge {
+.ax-rank {
 
     display:
         inline-flex;
 
     width:
-        30px;
+        29px;
 
     height:
-        30px;
+        29px;
+
+    border-radius:
+        50%;
 
     align-items:
         center;
@@ -1692,27 +1672,15 @@ div[data-testid="stMetric"] {
     justify-content:
         center;
 
-    border-radius:
-        50%;
-
     font-weight:
         1000;
 
     background:
-        #1a2f49;
-
-    border:
-        1px solid
-        rgba(
-            255,
-            255,
-            255,
-            .15
-        );
+        #1b314d;
 }
 
 
-.r1 {
+.ax-rank.r1 {
 
     background:
         linear-gradient(
@@ -1722,60 +1690,56 @@ div[data-testid="stMetric"] {
         );
 
     color:
-        #281700;
+        #291900;
 }
 
 
-.r2 {
+.ax-rank.r2 {
 
     background:
         linear-gradient(
             135deg,
             #edf2f7,
-            #8794a6
+            #8997a8
         );
 
     color:
-        #15202c;
+        #13202e;
 }
 
 
-.r3 {
+.ax-rank.r3 {
 
     background:
         linear-gradient(
             135deg,
-            #e7a56f,
-            #8d4b24
+            #e3a36e,
+            #8f4a24
         );
 
     color:
-        #211007;
+        #261208;
 }
 
 
-.team-bold {
+.ax-left {
+
+    text-align:
+        left !important;
+
+    max-width:
+        280px;
+}
+
+
+.ax-team-cell {
 
     font-weight:
         950;
 }
 
 
-.title-left {
-
-    text-align:
-        left !important;
-
-    max-width:
-        320px;
-}
-
-
-/* ==========================================================
-   COMMENTS
-   ========================================================== */
-
-.comments-grid {
+.ax-comments {
 
     display:
         grid;
@@ -1790,71 +1754,71 @@ div[data-testid="stMetric"] {
         );
 
     gap:
-        11px;
+        10px;
 }
 
 
-.comment-card {
+.ax-comment {
 
     border:
         1px solid
         rgba(
-            116,
+            117,
             159,
-            216,
+            215,
             .18
         );
 
     border-radius:
-        15px;
+        14px;
 
     padding:
         13px 14px;
+
+    min-height:
+        126px;
 
     background:
         linear-gradient(
             180deg,
             rgba(
-                12,
+                13,
                 31,
-                55,
-                .88
+                54,
+                .92
             ),
             rgba(
                 6,
                 20,
-                37,
-                .88
+                36,
+                .92
             )
         );
-
-    min-height:
-        120px;
 }
 
 
-.comment-card.champion {
+.ax-comment.champion {
 
     border-color:
         rgba(
-            239,
+            240,
             190,
-            62,
-            .52
+            60,
+            .5
         );
 
     box-shadow:
         inset 0 0 0 1px
         rgba(
-            239,
+            240,
             190,
-            62,
-            .09
+            60,
+            .08
         );
 }
 
 
-.comment-top {
+.ax-comment-top {
 
     display:
         flex;
@@ -1863,322 +1827,244 @@ div[data-testid="stMetric"] {
         space-between;
 
     gap:
-        8px;
-
-    align-items:
-        flex-start;
+        10px;
 
     margin-bottom:
         8px;
 }
 
 
-.comment-judge {
+.ax-judge {
 
     font-weight:
         950;
 
     color:
-        #9fc0ff;
-
-    overflow-wrap:
-        anywhere;
+        #9ec0ff;
 }
 
 
-.comment-card.champion
-.comment-judge {
+.ax-comment.champion
+.ax-judge {
 
     color:
-        #ffd76a;
+        #ffd86d;
 }
 
 
-.comment-agent {
+.ax-agent {
 
     font-size:
-        .72rem;
+        .69rem;
 
     color:
-        #91a3ba;
+        #91a2b7;
 
     text-align:
         right;
 }
 
 
-.comment-body {
+.ax-comment-body {
 
     font-size:
-        .90rem;
+        .87rem;
 
     line-height:
-        1.50;
+        1.5;
 
     color:
-        #edf3fa;
-
-    word-break:
-        keep-all;
+        #edf3f9;
 }
 
 
-.comment-score {
-
-    margin-top:
-        10px;
+.ax-comment-score {
 
     font-size:
-        .70rem;
+        .69rem;
 
     color:
         #7f93ad;
+
+    margin-top:
+        10px;
 }
 
 
-/* ==========================================================
-   SETTINGS
-   ========================================================== */
+/* TABLET */
 
-.agent-setting {
+@media
+(max-width:1099px) {
 
-    border:
-        1px solid
-        var(--line);
-
-    border-radius:
-        16px;
-
-    padding:
-        12px 14px 2px 14px;
-
-    margin-bottom:
-        12px;
-
-    background:
-        rgba(
-            8,
-            24,
-            45,
-            .64
-        );
-}
-
-
-/* ==========================================================
-   TABLET
-   ========================================================== */
-
-@media (max-width: 900px) {
-
-    .block-container {
-
-        padding-left:
-            .75rem;
-
-        padding-right:
-            .75rem;
-    }
-
-
-    .brand-user {
-
-        display:
-            none;
-    }
-
-
-    .podium-wrap {
-
-        grid-template-columns:
-            1fr 1.08fr 1fr;
+    .ax-podium-grid {
 
         gap:
-            7px;
+            8px;
     }
 
 
-    .person-grid {
+    .ax-entry {
 
-        grid-template-columns:
-            1fr;
-
-        gap:
-            6px;
-    }
-
-
-    .person-card {
+        padding:
+            10px 7px;
 
         min-height:
-            106px;
-
-        padding:
-            10px 6px;
+            96px;
     }
 
 
-    .person-team {
-
-        font-size:
-            .83rem;
-    }
-
-
-    .person-presenter {
-
-        font-size:
-            .74rem;
-    }
-
-
-    .person-title {
-
-        font-size:
-            .66rem;
-    }
-
-
-    .award-head {
-
-        gap:
-            4px;
-    }
-
-
-    .medal {
-
-        font-size:
-            1.45rem;
-    }
-
-
-    .awards-stage {
-
-        padding:
-            22px 8px 14px 8px;
-    }
-
-
-    .silver .podium-base {
-
-        height:
-            62px;
-    }
-
-
-    .gold .podium-base {
-
-        height:
-            88px;
-    }
-
-
-    .bronze .podium-base {
-
-        height:
-            50px;
-    }
-
-
-    .podium-base span {
-
-        font-size:
-            1.7rem;
-    }
-
-
-    .comments-grid {
-
-        grid-template-columns:
-            1fr;
-    }
-}
-
-
-/* ==========================================================
-   PHONE
-   ========================================================== */
-
-@media (max-width: 520px) {
-
-    .brandbar {
-
-        padding:
-            11px 12px;
-    }
-
-
-    .brand-main {
-
-        font-size:
-            1.0rem;
-    }
-
-
-    .brand-chip {
-
-        font-size:
-            .62rem;
-    }
-
-
-    .awards-kicker {
-
-        font-size:
-            .67rem;
-    }
-
-
-    .awards-title {
-
-        font-size:
-            1.45rem;
-    }
-
-
-    .awards-sub {
-
-        font-size:
-            .76rem;
-
-        margin-bottom:
-            18px;
-    }
-
-
-    .award-name {
-
-        font-size:
-            .82rem;
-    }
-
-
-    .person-card {
+    .ax-gold-entry {
 
         min-height:
-            94px;
+            112px;
     }
 
 
-    .person-team {
+    .ax-team {
+
+        font-size:
+            .84rem;
+    }
+
+
+    .ax-presenter {
 
         font-size:
             .73rem;
     }
 
 
-    .person-presenter {
+    .ax-title {
 
         font-size:
-            .67rem;
+            .64rem;
     }
 
 
-    .person-title {
+    .ax-comments {
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+}
+
+
+/* MOBILE */
+
+@media
+(max-width:699px) {
+
+    .block-container {
+
+        padding-left:
+            .7rem;
+
+        padding-right:
+            .7rem;
+    }
+
+
+    .ax-brand-user {
+
+        display:
+            none;
+    }
+
+
+    .ax-summary {
+
+        grid-template-columns:
+            1fr;
+
+        gap:
+            7px;
+    }
+
+
+    .ax-awards {
+
+        padding:
+            22px 10px 16px;
+    }
+
+
+    .ax-podium-grid {
+
+        grid-template-columns:
+            1fr;
+
+        grid-template-areas:
+            "gold"
+            "silver"
+            "bronze";
+
+        gap:
+            18px;
+    }
+
+
+    .ax-award-col {
+
+        max-width:
+            520px;
+
+        width:
+            100%;
+
+        margin:
+            0 auto;
+    }
+
+
+    .ax-stage {
+
+        height:
+            48px !important;
 
         font-size:
-            .59rem;
+            1.5rem;
+    }
+
+
+    .gold .ax-stage {
+
+        height:
+            62px !important;
+    }
+
+
+    .ax-entry,
+    .ax-gold-entry {
+
+        min-height:
+            auto;
+    }
+
+
+    .ax-comments {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .ax-section {
+
+        padding:
+            12px;
+    }
+
+
+    .ax-table {
+
+        min-width:
+            860px;
     }
 }
 
@@ -2188,42 +2074,28 @@ div[data-testid="stMetric"] {
 )
 
 
-# ------------------------------------------------------------
-# UI RENDERERS
-# ------------------------------------------------------------
-def render_brand(user=None):
+def render_brand(
+    user=None,
+):
 
-    if user:
-
-        who = (
-            f"접속자 · {esc(user)}"
-        )
-
-    else:
-
-        who = (
-            "모바일 실시간 채점 시스템"
-        )
+    who = (
+        f"접속자 · {esc(user)}"
+        if user
+        else
+        "모바일 실시간 채점 시스템"
+    )
 
     st.markdown(
         f"""
-        <div class="brandbar">
+        <div class="ax-brand">
 
-            <div class="brand-left">
-
-                <div class="brand-main">
-                    DIFFUSION
-                    <span>AX</span>
-                    CONTEST
-                </div>
-
-                <div class="brand-chip">
-                    AIX
-                </div>
-
+            <div class="ax-brand-title">
+                DIFFUSION
+                <span>AX</span>
+                CONTEST
             </div>
 
-            <div class="brand-user">
+            <div class="ax-brand-user">
                 {who}
             </div>
 
@@ -2233,46 +2105,28 @@ def render_brand(user=None):
     )
 
 
-def render_agent_card(agent):
-
-    title = esc(
-        agent_display_title(
-            agent
-        )
-    )
-
-    team = esc(
-        show_value(
-            agent.get("team"),
-            "팀 미입력",
-        )
-    )
-
-    presenter = esc(
-        show_value(
-            agent.get("presenter"),
-            "발표자 미입력",
-        )
-    )
+def render_agent_card(
+    agent,
+):
 
     st.markdown(
         f"""
-        <div class="agent-card">
+        <div class="ax-agent-card">
 
-            <div class="agent-card-title">
-                {title}
+            <div class="ax-agent-title">
+                {esc(agent_display_title(agent))}
             </div>
 
-            <div class="agent-card-meta">
+            <div class="ax-agent-meta">
 
                 <span>
                     <b>팀</b>
-                    {team}
+                    {esc(display(agent.get("team"), "팀 미입력"))}
                 </span>
 
                 <span>
                     <b>발표자</b>
-                    {presenter}
+                    {esc(display(agent.get("presenter"), "발표자 미입력"))}
                 </span>
 
             </div>
@@ -2283,249 +2137,300 @@ def render_agent_card(agent):
     )
 
 
-def person_card(
+def award_entry(
     row,
+    gold=False,
 ):
 
-    if not row:
+    if row is None:
 
         return """
-        <div class="person-card person-empty">
+        <div class="ax-entry empty">
 
-            <div class="person-team">
+            <div class="ax-team">
                 &nbsp;
             </div>
 
-            <div class="person-presenter">
+            <div class="ax-presenter">
                 &nbsp;
             </div>
 
-            <div class="person-title">
+            <div class="ax-title">
                 &nbsp;
             </div>
 
         </div>
         """
 
-    team = esc(
-        show_value(
-            row.get("팀"),
-            "",
-        )
+    css = (
+        "ax-entry ax-gold-entry"
+        if gold
+        else
+        "ax-entry"
     )
 
-    presenter = esc(
-        show_value(
-            row.get("발표자"),
-            "",
-        )
+    team = display(
+        row.get("팀"),
+        "팀 미입력",
     )
 
-    title = esc(
-        show_value(
-            row.get("제목"),
-            "",
-        )
+    presenter = display(
+        row.get("발표자"),
+        "발표자 미입력",
+    )
+
+    title = display(
+        row.get("제목"),
+        f"Agent {int(row.get('slot', 0))}",
     )
 
     return f"""
-    <div class="person-card">
+    <div class="{css}">
 
-        <div class="person-team">
-            {team}
+        <div class="ax-team">
+            {esc(team)}
         </div>
 
-        <div class="person-presenter">
-            {presenter}
+        <div class="ax-presenter">
+            {esc(presenter)}
         </div>
 
-        <div class="person-title">
-            {title}
+        <div class="ax-title">
+            {esc(title)}
         </div>
 
     </div>
     """
 
 
-def render_awards_stage(result):
+def render_result_summary(
+    completed_judges,
+    complete_count,
+):
 
-    rows = result.to_dict(
-        "records"
+    st.markdown(
+        f"""
+        <div class="ax-summary">
+
+            <div class="ax-metric">
+
+                <div class="ax-metric-label">
+                    채점 완료 심사위원
+                </div>
+
+                <div class="ax-metric-value">
+                    {completed_judges} / 9
+                </div>
+
+            </div>
+
+
+            <div class="ax-metric">
+
+                <div class="ax-metric-label">
+                    전체 채점 진행
+                </div>
+
+                <div class="ax-metric-value">
+                    {complete_count} / 45
+                </div>
+
+            </div>
+
+
+            <div class="ax-metric">
+
+                <div class="ax-metric-label">
+                    Agent 최종점수 만점
+                </div>
+
+                <div class="ax-metric-value">
+                    {MAX_TOTAL}점
+                </div>
+
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_awards(
+    result,
+):
+
+    records = (
+        result.to_dict(
+            "records"
+        )
     )
 
     first = (
-        rows[0]
-        if len(rows) > 0
+        records[0]
+        if len(records) > 0
         else None
     )
 
-    second_third = (
-        rows[1:3]
+    silver = (
+        records[1:3]
     )
 
-    fourth_fifth = (
-        rows[3:5]
+    bronze = (
+        records[3:5]
     )
 
     while len(
-        second_third
+        silver
     ) < 2:
 
-        second_third.append(
+        silver.append(
             None
         )
 
     while len(
-        fourth_fifth
+        bronze
     ) < 2:
 
-        fourth_fifth.append(
+        bronze.append(
             None
         )
 
     st.markdown(
         f"""
-        <div class="awards-stage">
+        <div class="ax-awards">
 
-            <div class="awards-kicker">
+            <div class="ax-awards-kicker">
                 DIFFUSION AX CONTEST
             </div>
 
-            <div class="awards-title">
+            <div class="ax-awards-title">
 
                 🏆
 
-                <span class="goldword">
+                <span>
                     AWARDS
                 </span>
 
             </div>
 
-            <div class="awards-sub">
-                혁신의 아이디어가
-                더 나은 현장을 만듭니다
+            <div class="ax-awards-sub">
+                혁신의 아이디어가 더 나은 현장을 만듭니다
             </div>
 
 
-            <div class="podium-wrap">
+            <div class="ax-podium-grid">
 
-                <div class="award-col silver">
 
-                    <div class="award-head">
+                <div class="ax-award-col silver">
 
-                        <span class="medal">
+                    <div class="ax-award-head">
+
+                        <span class="ax-medal">
                             🥈
                         </span>
 
-                        <span class="award-name">
+                        <span class="ax-award-name">
                             우수상
-                            <small>
-                                (2팀)
-                            </small>
+                        </span>
+
+                        <span class="ax-award-count">
+                            2팀
                         </span>
 
                     </div>
 
 
-                    <div class="person-grid">
+                    <div class="ax-entry-list">
 
-                        {person_card(
-                            second_third[0]
+                        {award_entry(
+                            silver[0]
                         )}
 
-                        {person_card(
-                            second_third[1]
+                        {award_entry(
+                            silver[1]
                         )}
 
                     </div>
 
 
-                    <div class="podium-base">
-
-                        <span>
-                            2
-                        </span>
-
+                    <div class="ax-stage">
+                        2
                     </div>
 
                 </div>
 
 
-                <div class="award-col gold">
+                <div class="ax-award-col gold">
 
-                    <div class="award-head">
+                    <div class="ax-award-head">
 
-                        <span class="medal">
+                        <span class="ax-medal">
                             🥇
                         </span>
 
-                        <span class="award-name">
+                        <span class="ax-award-name">
                             최우수상
-                            <small>
-                                (1팀)
-                            </small>
+                        </span>
+
+                        <span class="ax-award-count">
+                            1팀
                         </span>
 
                     </div>
 
 
-                    <div class="person-grid">
+                    <div class="ax-entry-list">
 
-                        {person_card(
-                            first
+                        {award_entry(
+                            first,
+                            gold=True,
                         )}
 
                     </div>
 
 
-                    <div class="podium-base">
-
-                        <span>
-                            1
-                        </span>
-
+                    <div class="ax-stage">
+                        1
                     </div>
 
                 </div>
 
 
-                <div class="award-col bronze">
+                <div class="ax-award-col bronze">
 
-                    <div class="award-head">
+                    <div class="ax-award-head">
 
-                        <span class="medal">
+                        <span class="ax-medal">
                             🥉
                         </span>
 
-                        <span class="award-name">
+                        <span class="ax-award-name">
                             장려상
-                            <small>
-                                (2팀)
-                            </small>
+                        </span>
+
+                        <span class="ax-award-count">
+                            2팀
                         </span>
 
                     </div>
 
 
-                    <div class="person-grid">
+                    <div class="ax-entry-list">
 
-                        {person_card(
-                            fourth_fifth[0]
+                        {award_entry(
+                            bronze[0]
                         )}
 
-                        {person_card(
-                            fourth_fifth[1]
+                        {award_entry(
+                            bronze[1]
                         )}
 
                     </div>
 
 
-                    <div class="podium-base">
-
-                        <span>
-                            3
-                        </span>
-
+                    <div class="ax-stage">
+                        3
                     </div>
 
                 </div>
@@ -2538,22 +2443,32 @@ def render_awards_stage(result):
     )
 
 
-def render_result_table(result):
+def render_result_table(
+    result,
+):
 
-    body = []
+    rows_html = []
 
-    for _, r in result.iterrows():
+    for _, row in (
+        result.iterrows()
+    ):
 
         rank = int(
-            r["순위"]
+            row["순위"]
         )
 
         if rank == 1:
 
-            badge = "r1"
+            rank_class = (
+                "r1"
+            )
 
             award = (
                 "🥇 최우수"
+            )
+
+            row_class = (
+                "rank1"
             )
 
         elif rank in (
@@ -2561,127 +2476,162 @@ def render_result_table(result):
             3,
         ):
 
-            badge = "r2"
+            rank_class = (
+                "r2"
+            )
 
             award = (
                 "🥈 우수"
             )
 
+            row_class = (
+                ""
+            )
+
         else:
 
-            badge = "r3"
+            rank_class = (
+                "r3"
+            )
 
             award = (
                 "🥉 장려"
             )
 
-        body.append(
+            row_class = (
+                ""
+            )
+
+
+        rows_html.append(
             f"""
-            <tr>
+            <tr class="{row_class}">
 
                 <td>
 
-                    <span class="rank-badge {badge}">
+                    <span class="ax-rank {rank_class}">
                         {rank}
                     </span>
 
                 </td>
 
-                <td class="team-bold">
+
+                <td class="ax-team-cell">
+
                     {esc(
-                        show_value(
-                            r["팀"],
+                        display(
+                            row["팀"],
                             "",
                         )
                     )}
+
                 </td>
 
+
                 <td>
+
                     {esc(
-                        show_value(
-                            r["발표자"],
+                        display(
+                            row["발표자"],
                             "",
                         )
                     )}
+
                 </td>
 
-                <td class="title-left">
+
+                <td class="ax-left">
+
                     {esc(
-                        show_value(
-                            r["제목"],
+                        display(
+                            row["제목"],
                             "",
                         )
                     )}
+
                 </td>
 
-                <td>
-                    {int(
-                        r["현업문제"]
-                    )}
-                </td>
 
                 <td>
-                    {int(
-                        r["업무효과"]
-                    )}
-                </td>
 
-                <td>
-                    {int(
-                        r["완성도"]
-                    )}
-                </td>
-
-                <td>
-                    {int(
-                        r["활용편의"]
-                    )}
-                </td>
-
-                <td>
-                    {int(
-                        r["확산가능"]
-                    )}
-                </td>
-
-                <td>
                     <b>
                         {int(
-                            r["최종점수"]
+                            row["최종점수"]
                         )}
                     </b>
+
                 </td>
 
-                <td>
-                    {int(
-                        r["제출인원"]
-                    )}/9
-                </td>
 
                 <td>
                     {award}
+                </td>
+
+
+                <td>
+
+                    {int(
+                        row["제출인원"]
+                    )}/9
+
+                </td>
+
+
+                <td>
+                    {int(
+                        row["현업문제"]
+                    )}
+                </td>
+
+
+                <td>
+                    {int(
+                        row["업무효과"]
+                    )}
+                </td>
+
+
+                <td>
+                    {int(
+                        row["완성도"]
+                    )}
+                </td>
+
+
+                <td>
+                    {int(
+                        row["활용편의"]
+                    )}
+                </td>
+
+
+                <td>
+                    {int(
+                        row["확산가능"]
+                    )}
                 </td>
 
             </tr>
             """
         )
 
+
     st.markdown(
         f"""
-        <div class="section-card">
+        <div class="ax-section">
 
-            <div class="section-title">
+            <div class="ax-section-title">
 
                 📊 최종 결과표
 
-                <small>
+                <span class="ax-section-sub">
                     가중치 반영 실시간 집계
-                </small>
+                </span>
 
             </div>
 
 
-            <div class="table-scroll">
+            <div class="ax-table-wrap">
 
                 <table class="ax-table">
 
@@ -2689,60 +2639,30 @@ def render_result_table(result):
 
                         <tr>
 
-                            <th>
-                                순위
-                            </th>
-
-                            <th>
-                                팀
-                            </th>
-
-                            <th>
-                                발표자
-                            </th>
-
-                            <th>
-                                제목
-                            </th>
-
-                            <th>
-                                현업문제
-                            </th>
-
-                            <th>
-                                업무효과
-                            </th>
-
-                            <th>
-                                완성도
-                            </th>
-
-                            <th>
-                                활용편의
-                            </th>
-
-                            <th>
-                                확산가능
-                            </th>
-
-                            <th>
-                                총점
-                            </th>
-
-                            <th>
-                                제출
-                            </th>
-
-                            <th>
-                                현재 수상
-                            </th>
+                            <th>순위</th>
+                            <th>팀</th>
+                            <th>발표자</th>
+                            <th>제목</th>
+                            <th>총점</th>
+                            <th>현재 수상</th>
+                            <th>제출</th>
+                            <th>현업문제</th>
+                            <th>업무효과</th>
+                            <th>완성도</th>
+                            <th>활용편의</th>
+                            <th>확산가능</th>
 
                         </tr>
 
                     </thead>
 
+
                     <tbody>
-                        {''.join(body)}
+
+                        {''.join(
+                            rows_html
+                        )}
+
                     </tbody>
 
                 </table>
@@ -2760,27 +2680,26 @@ def render_comments(
     result,
 ):
 
-    st.markdown(
-        """
-        <div class="section-title">
-
-            💬 심사위원 코멘트
-
-            <small>
-                DIFF_CHAMPION →
-                DIFF_STRAT →
-                나머지 ABC 순
-            </small>
-
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     if comments_df.empty:
 
-        st.info(
-            "아직 등록된 코멘트가 없습니다."
+        st.markdown(
+            """
+            <div class="ax-section">
+
+                <div class="ax-section-title">
+                    💬 심사위원 코멘트
+                </div>
+
+                <div style="
+                    color:#9fb0c6;
+                    font-size:.85rem;
+                ">
+                    아직 등록된 코멘트가 없습니다.
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         return
@@ -2789,47 +2708,54 @@ def render_comments(
     agent_map = {
 
         int(
-            r["slot"]
+            row["slot"]
         ):
         {
-            "title":
-                show_value(
-                    r["제목"],
-                    f"Agent {int(r['slot'])}",
+            "team":
+                display(
+                    row["팀"],
+                    "",
                 ),
 
-            "team":
-                show_value(
-                    r["팀"],
-                    "",
+            "title":
+                display(
+                    row["제목"],
+                    f"Agent {int(row['slot'])}",
                 ),
         }
 
-        for _, r
+        for _, row
         in result.iterrows()
     }
 
 
-    comments_df = (
+    comments = (
         comments_df.copy()
     )
 
-    comments_df[
+
+    comments[
         "judge_order"
     ] = (
-        comments_df[
+
+        comments[
             "judge"
         ]
+
         .map(
             JUDGE_ORDER
         )
+
         .fillna(
             999
         )
     )
 
-    comments_df = (
-        comments_df
+
+    comments = (
+
+        comments
+
         .sort_values(
             [
                 "judge_order",
@@ -2841,54 +2767,89 @@ def render_comments(
 
     cards = []
 
-    for _, row in comments_df.iterrows():
+
+    for _, row in (
+        comments.iterrows()
+    ):
 
         slot = int(
-            row["agent_slot"]
+            row[
+                "agent_slot"
+            ]
         )
+
 
         info = (
             agent_map.get(
                 slot,
                 {
-                    "title":
-                        f"Agent {slot}",
-
                     "team":
                         "",
+
+                    "title":
+                        f"Agent {slot}",
                 },
             )
         )
 
+
         champion = (
             " champion"
-            if row["judge"]
+
+            if row[
+                "judge"
+            ]
             == "DIFF_CHAMPION"
+
             else ""
         )
 
+
+        crown = (
+            "👑 "
+
+            if row[
+                "judge"
+            ]
+            == "DIFF_CHAMPION"
+
+            else ""
+        )
+
+
         cards.append(
             f"""
-            <div class="comment-card{champion}">
+            <div class="ax-comment{champion}">
 
-                <div class="comment-top">
+                <div class="ax-comment-top">
 
-                    <div class="comment-judge">
+                    <div class="ax-judge">
+
+                        {crown}
+
                         {esc(
-                            row["judge"]
+                            row[
+                                "judge"
+                            ]
                         )}
+
                     </div>
 
-                    <div class="comment-agent">
+
+                    <div class="ax-agent">
 
                         {esc(
-                            info["team"]
+                            info[
+                                "team"
+                            ]
                         )}
 
                         <br>
 
                         {esc(
-                            info["title"]
+                            info[
+                                "title"
+                            ]
                         )}
 
                     </div>
@@ -2896,31 +2857,42 @@ def render_comments(
                 </div>
 
 
-                <div class="comment-body">
+                <div class="ax-comment-body">
 
                     {esc(
-                        row["comment"]
+                        row[
+                            "comment"
+                        ]
                     )}
 
                 </div>
 
 
-                <div class="comment-score">
+                <div class="ax-comment-score">
 
                     원점수
+
                     {int(
-                        row["total"]
-                    )}
+                        row[
+                            "total"
+                        ]
+                    )}/25
 
                     · 가중치
-                    {int(
-                        row["weight"]
+
+                    ×{int(
+                        row[
+                            "weight"
+                        ]
                     )}
 
                     · 반영
+
                     {int(
-                        row["weighted_total"]
-                    )}
+                        row[
+                            "weighted_total"
+                        ]
+                    )}점
 
                 </div>
 
@@ -2931,11 +2903,28 @@ def render_comments(
 
     st.markdown(
         f"""
-        <div class="section-card">
+        <div class="ax-section">
 
-            <div class="comments-grid">
+            <div class="ax-section-title">
 
-                {''.join(cards)}
+                💬 심사위원 코멘트
+
+                <span class="ax-section-sub">
+
+                    DIFF_CHAMPION →
+                    DIFF_STRAT →
+                    나머지 ABC 순
+
+                </span>
+
+            </div>
+
+
+            <div class="ax-comments">
+
+                {''.join(
+                    cards
+                )}
 
             </div>
 
@@ -2945,12 +2934,13 @@ def render_comments(
     )
 
 
-# ------------------------------------------------------------
-# LOGIN
-# ------------------------------------------------------------
-if "user" not in st.session_state:
+if (
+    "user"
+    not in st.session_state
+):
 
     render_brand()
+
 
     left, center, right = (
         st.columns(
@@ -2962,12 +2952,8 @@ if "user" not in st.session_state:
         )
     )
 
-    with center:
 
-        st.markdown(
-            '<div class="glass-card">',
-            unsafe_allow_html=True,
-        )
+    with center:
 
         st.markdown(
             "### 🏆 DIFFUSION AX 경진대회"
@@ -2976,6 +2962,7 @@ if "user" not in st.session_state:
         st.caption(
             "심사위원 또는 MASTER 계정으로 로그인하세요."
         )
+
 
         with st.form(
             "login_form"
@@ -2994,6 +2981,7 @@ if "user" not in st.session_state:
                 )
             )
 
+
             password = (
                 st.text_input(
                     "비밀번호",
@@ -3004,6 +2992,7 @@ if "user" not in st.session_state:
                 )
             )
 
+
             submitted = (
                 st.form_submit_button(
                     "로그인",
@@ -3011,11 +3000,15 @@ if "user" not in st.session_state:
                 )
             )
 
+
         if submitted:
 
             if (
                 username in USERS
-                and USERS[
+
+                and
+
+                USERS[
                     username
                 ][
                     "password"
@@ -3043,10 +3036,6 @@ if "user" not in st.session_state:
                     "접속자명 또는 비밀번호가 올바르지 않습니다."
                 )
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True,
-        )
 
     st.stop()
 
@@ -3069,7 +3058,8 @@ render_brand(
 )
 
 
-c1, c2 = (
+_,
+logout_col = (
     st.columns(
         [
             8,
@@ -3078,7 +3068,8 @@ c1, c2 = (
     )
 )
 
-with c2:
+
+with logout_col:
 
     if st.button(
         "로그아웃",
@@ -3088,9 +3079,6 @@ with c2:
         logout()
 
 
-# ------------------------------------------------------------
-# JUDGE
-# ------------------------------------------------------------
 if role == "judge":
 
     weight = (
@@ -3100,6 +3088,7 @@ if role == "judge":
             "weight"
         ]
     )
+
 
     if weight == 3:
 
@@ -3125,7 +3114,9 @@ if role == "judge":
             f"{a['slot']}. "
             f"{agent_display_title(a)}"
         ):
-        a["slot"]
+            a[
+                "slot"
+            ]
 
         for a
         in agents
@@ -3149,18 +3140,19 @@ if role == "judge":
     )
 
 
-    selected_agent = next(
+    selected_agent = (
+        next(
+            a
+            for a in agents
 
-        a
-
-        for a
-        in agents
-
-        if int(
-            a["slot"]
-        )
-        == int(
-            slot
+            if int(
+                a[
+                    "slot"
+                ]
+            )
+            == int(
+                slot
+            )
         )
     )
 
@@ -3199,12 +3191,12 @@ if role == "judge":
                 ]
             )
 
-            for i
-            in range(
+            for i in range(
                 1,
                 6,
             )
         ]
+
 
         old_comment = (
             old.get(
@@ -3212,6 +3204,7 @@ if role == "judge":
             )
             or ""
         )
+
 
         st.success(
             "이미 제출한 Agent입니다. 다시 제출하면 기존 점수가 수정됩니다."
@@ -3245,6 +3238,7 @@ if role == "judge":
                 description
             )
 
+
             values.append(
                 st.radio(
                     name,
@@ -3255,17 +3249,14 @@ if role == "judge":
                         4,
                         5,
                     ],
-                    index=(
+                    index=
                         defaults[i]
-                        - 1
-                    ),
+                        - 1,
                     horizontal=True,
-                    label_visibility="collapsed",
-                    key=(
-                        f"{user}_"
-                        f"{slot}_"
-                        f"c{i+1}"
-                    ),
+                    label_visibility=
+                        "collapsed",
+                    key=
+                        f"{user}_{slot}_c{i+1}",
                 )
             )
 
@@ -3273,12 +3264,10 @@ if role == "judge":
         comment = (
             st.text_input(
                 "한줄 의견 (선택)",
-                value=(
-                    old_comment
-                ),
-                placeholder=(
-                    "Agent에 대한 의견이 있으면 입력"
-                ),
+                value=
+                    old_comment,
+                placeholder=
+                    "Agent에 대한 의견이 있으면 입력",
             )
         )
 
@@ -3336,8 +3325,7 @@ if role == "judge":
             ]
         )
 
-        for r
-        in rows
+        for r in rows
 
         if r.get(
             "judge"
@@ -3364,15 +3352,14 @@ if role == "judge":
     st.stop()
 
 
-# ------------------------------------------------------------
-# MASTER
-# ------------------------------------------------------------
 st.success(
     "MASTER 관리자 모드 · 실시간 집계"
 )
 
 
-tab_result, tab_status, tab_settings = (
+tab_result,
+tab_status,
+tab_settings = (
     st.tabs(
         [
             "🏆 결과 보기",
@@ -3383,9 +3370,6 @@ tab_result, tab_status, tab_settings = (
 )
 
 
-# ------------------------------------------------------------
-# MASTER - RESULT
-# ------------------------------------------------------------
 with tab_result:
 
     @st.fragment(
@@ -3399,7 +3383,9 @@ with tab_result:
 
 
         result = (
+
             result
+
             .sort_values(
                 [
                     "최종점수",
@@ -3410,6 +3396,7 @@ with tab_result:
                     True,
                 ],
             )
+
             .reset_index(
                 drop=True
             )
@@ -3421,30 +3408,57 @@ with tab_result:
             "순위",
             range(
                 1,
-                len(result) + 1,
+                len(result)
+                + 1,
             ),
         )
 
+
+        complete_count = 0
 
         completed_judges = 0
 
 
         if not score_df.empty:
 
-            counts = (
+            unique_scores = (
+
                 score_df
+
+                .drop_duplicates(
+                    subset=[
+                        "judge",
+                        "agent_slot",
+                    ]
+                )
+            )
+
+
+            complete_count = (
+                len(
+                    unique_scores
+                )
+            )
+
+
+            judge_counts = (
+
+                unique_scores
+
                 .groupby(
                     "judge"
                 )[
                     "agent_slot"
                 ]
+
                 .nunique()
             )
+
 
             completed_judges = sum(
 
                 int(
-                    counts.get(
+                    judge_counts.get(
                         j,
                         0,
                     )
@@ -3456,32 +3470,13 @@ with tab_result:
             )
 
 
-        m1, m2, m3 = (
-            st.columns(
-                3
-            )
+        render_result_summary(
+            completed_judges,
+            complete_count,
         )
 
 
-        m1.metric(
-            "채점 완료 심사위원",
-            f"{completed_judges} / 9",
-        )
-
-
-        m2.metric(
-            "최종점수 만점",
-            f"{MAX_TOTAL}점",
-        )
-
-
-        m3.metric(
-            "자동 갱신",
-            "3초",
-        )
-
-
-        render_awards_stage(
+        render_awards(
             result
         )
 
@@ -3494,7 +3489,7 @@ with tab_result:
         if completed_judges < 9:
 
             st.caption(
-                "※ 아직 모든 심사위원의 채점이 완료되지 않았으므로 순위는 변동될 수 있습니다."
+                "※ 아직 모든 심사위원의 채점이 완료되지 않아 순위가 변동될 수 있습니다."
             )
 
         else:
@@ -3511,7 +3506,10 @@ with tab_result:
 
         if (
             not score_df.empty
-            and "comment"
+
+            and
+
+            "comment"
             in score_df.columns
         ):
 
@@ -3519,24 +3517,36 @@ with tab_result:
                 score_df.copy()
             )
 
+
             comments_df[
                 "comment"
             ] = (
+
                 comments_df[
                     "comment"
                 ]
-                .fillna("")
-                .astype(str)
+
+                .fillna(
+                    ""
+                )
+
+                .astype(
+                    str
+                )
+
                 .str.strip()
             )
 
+
             comments_df = (
+
                 comments_df[
                     comments_df[
                         "comment"
                     ]
                     != ""
                 ]
+
                 .copy()
             )
 
@@ -3548,10 +3558,13 @@ with tab_result:
 
 
         csv = (
+
             result
+
             .to_csv(
                 index=False
             )
+
             .encode(
                 "utf-8-sig"
             )
@@ -3559,22 +3572,26 @@ with tab_result:
 
 
         st.download_button(
+
             "⬇️ 최종 결과 CSV 다운로드",
-            data=csv,
-            file_name=(
-                "DIFFUSION_AX_최종결과.csv"
-            ),
-            mime="text/csv",
-            use_container_width=True,
+
+            data=
+                csv,
+
+            file_name=
+                "DIFFUSION_AX_최종결과.csv",
+
+            mime=
+                "text/csv",
+
+            use_container_width=
+                True,
         )
 
 
     live_results()
 
 
-# ------------------------------------------------------------
-# MASTER - STATUS
-# ------------------------------------------------------------
 with tab_status:
 
     @st.fragment(
@@ -3600,6 +3617,7 @@ with tab_status:
         for judge in JUDGES:
 
             row = {
+
                 "심사위원":
                     judge,
 
@@ -3635,26 +3653,22 @@ with tab_status:
                             score_df[
                                 "agent_slot"
                             ]
-                            .astype(int)
+                            .astype(
+                                int
+                            )
                             == int(
                                 agent[
                                     "slot"
                                 ]
                             )
                         )
-
                     ).any()
 
 
-                label = (
+                row[
                     agent_display_title(
                         agent
                     )
-                )
-
-
-                row[
-                    label
                 ] = (
                     "✅"
                     if done
@@ -3692,8 +3706,9 @@ with tab_status:
 
             if score_df.empty
 
-            else len(
+            else
 
+            len(
                 score_df
                 .drop_duplicates(
                     subset=[
@@ -3701,7 +3716,6 @@ with tab_status:
                         "agent_slot",
                     ]
                 )
-
             )
         )
 
@@ -3724,9 +3738,6 @@ with tab_status:
     live_status()
 
 
-# ------------------------------------------------------------
-# MASTER - SETTINGS
-# ------------------------------------------------------------
 with tab_settings:
 
     st.markdown(
@@ -3761,12 +3772,6 @@ with tab_settings:
 
 
             st.markdown(
-                '<div class="agent-setting">',
-                unsafe_allow_html=True,
-            )
-
-
-            st.markdown(
                 f"#### Agent {slot}"
             )
 
@@ -3774,61 +3779,54 @@ with tab_settings:
             name = (
                 st.text_input(
                     f"Agent {slot} 내부명",
-                    value=(
+                    value=
                         agent[
                             "name"
-                        ]
-                    ),
-                    key=(
-                        f"name_{slot}"
-                    ),
+                        ],
+                    key=
+                        f"name_{slot}",
                 )
             )
 
 
-            cc1, cc2 = (
+            c1,
+            c2 = (
                 st.columns(
                     2
                 )
             )
 
 
-            with cc1:
+            with c1:
 
                 team = (
                     st.text_input(
                         f"Agent {slot} 팀",
-                        value=(
+                        value=
                             agent[
                                 "team"
-                            ]
-                        ),
-                        placeholder=(
-                            "예: DRAM_ALD"
-                        ),
-                        key=(
-                            f"team_{slot}"
-                        ),
+                            ],
+                        placeholder=
+                            "예: DRAM_ALD",
+                        key=
+                            f"team_{slot}",
                     )
                 )
 
 
-            with cc2:
+            with c2:
 
                 presenter = (
                     st.text_input(
                         f"Agent {slot} 발표자",
-                        value=(
+                        value=
                             agent[
                                 "presenter"
-                            ]
-                        ),
-                        placeholder=(
-                            "예: 홍길동"
-                        ),
-                        key=(
-                            f"presenter_{slot}"
-                        ),
+                            ],
+                        placeholder=
+                            "예: 홍길동",
+                        key=
+                            f"presenter_{slot}",
                     )
                 )
 
@@ -3836,17 +3834,14 @@ with tab_settings:
             title = (
                 st.text_input(
                     f"Agent {slot} 제목",
-                    value=(
+                    value=
                         agent[
                             "title"
-                        ]
-                    ),
-                    placeholder=(
-                        "예: DORIS Super Agent"
-                    ),
-                    key=(
-                        f"title_{slot}"
-                    ),
+                        ],
+                    placeholder=
+                        "예: DORIS Super Agent",
+                    key=
+                        f"title_{slot}",
                 )
             )
 
@@ -3869,10 +3864,7 @@ with tab_settings:
             }
 
 
-            st.markdown(
-                "</div>",
-                unsafe_allow_html=True,
-            )
+            st.divider()
 
 
         save_agents = (
@@ -3945,9 +3937,8 @@ with tab_settings:
 
     if st.button(
         "전체 점수 초기화",
-        disabled=(
-            not confirm
-        ),
+        disabled=
+            not confirm,
         use_container_width=True,
     ):
 
@@ -3960,7 +3951,6 @@ with tab_settings:
             )
 
             st.rerun()
-
 
         except Exception as e:
 
