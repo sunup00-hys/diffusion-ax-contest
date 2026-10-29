@@ -1,4 +1,5 @@
 import html
+import os
 from datetime import datetime, timezone
 from textwrap import dedent
 
@@ -50,9 +51,34 @@ CRITERIA = [
     ("확산 가능성", "다른 공정 · 팀에도 Skill / Tool / Agent 형태로 확산 가능한가?"),
 ]
 
+APP_ENV = os.getenv("AX_ENV", "production").strip().lower()
+IS_STAGING = APP_ENV == "staging"
+
+AGENTS_TABLE = "stg_agents" if IS_STAGING else "agents"
+SCORES_TABLE = "stg_scores" if IS_STAGING else "scores"
+SETTINGS_TABLE = "stg_app_settings" if IS_STAGING else "app_settings"
+
+
+def get_secret(name):
+    value = os.getenv(name)
+    if value:
+        return value
+    try:
+        return st.secrets[name]
+    except Exception:
+        return None
+
+
 @st.cache_resource
 def get_db():
-    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+    url = get_secret("SUPABASE_URL")
+    key = get_secret("SUPABASE_KEY")
+    if not url or not key:
+        raise RuntimeError(
+            "SUPABASE_URL / SUPABASE_KEY가 설정되지 않았습니다."
+        )
+    return create_client(url, key)
+
 
 db = get_db()
 
@@ -60,7 +86,7 @@ db = get_db()
 def get_champion_weight():
     try:
         rows = (
-            db.table("app_settings")
+            db.table(SETTINGS_TABLE)
             .select("value_int")
             .eq("key", "champion_weight")
             .execute()
@@ -76,7 +102,7 @@ def get_champion_weight():
 
 def set_champion_weight(weight):
     weight = max(1, int(weight))
-    db.table("app_settings").upsert(
+    db.table(SETTINGS_TABLE).upsert(
         {
             "key": "champion_weight",
             "value_int": weight,
@@ -86,7 +112,7 @@ def set_champion_weight(weight):
     ).execute()
 
     champion_rows = (
-        db.table("scores")
+        db.table(SCORES_TABLE)
         .select("agent_slot,total")
         .eq("judge", "DIFF_CHAMPION")
         .execute()
@@ -96,7 +122,7 @@ def set_champion_weight(weight):
     for row in champion_rows:
         total = int(row["total"])
         (
-            db.table("scores")
+            db.table(SCORES_TABLE)
             .update(
                 {
                     "weight": weight,
@@ -136,7 +162,7 @@ def logout():
 
 def get_agents():
     rows = (
-        db.table("agents")
+        db.table(AGENTS_TABLE)
         .select("slot,name,team,presenter,title")
         .order("slot")
         .execute()
@@ -158,12 +184,12 @@ def get_agents():
 
 
 def get_all_scores():
-    return db.table("scores").select("*").execute().data or []
+    return db.table(SCORES_TABLE).select("*").execute().data or []
 
 
 def get_score(judge, slot):
     rows = (
-        db.table("scores")
+        db.table(SCORES_TABLE)
         .select("*")
         .eq("judge", judge)
         .eq("agent_slot", slot)
@@ -177,7 +203,7 @@ def get_score(judge, slot):
 def save_score(judge, slot, values, comment):
     weight = get_champion_weight() if judge == "DIFF_CHAMPION" else 1
     total = sum(values)
-    db.table("scores").upsert(
+    db.table(SCORES_TABLE).upsert(
         {
             "judge": judge,
             "agent_slot": slot,
@@ -197,7 +223,7 @@ def save_score(judge, slot, values, comment):
 
 
 def update_agent(slot, name, team, presenter, title):
-    db.table("agents").upsert(
+    db.table(AGENTS_TABLE).upsert(
         {
             "slot": slot,
             "name": text_or(name, f"Agent {slot}"),
@@ -210,7 +236,7 @@ def update_agent(slot, name, team, presenter, title):
 
 
 def clear_all_scores():
-    db.table("scores").delete().neq("judge", "__never__").execute()
+    db.table(SCORES_TABLE).delete().neq("judge", "__never__").execute()
 
 
 def agent_title(agent):
@@ -307,12 +333,15 @@ st.markdown(CSS, unsafe_allow_html=True)
 
 def render_brand(user=None):
     who = f"접속자 · {esc(user)}" if user else "모바일 실시간 채점 시스템"
+    mode = " · STAGING" if IS_STAGING else ""
     html_block(f"""
     <div class="ax-brand">
-      <div class="ax-brand-title">DIFFUSION <span>AX</span> CONTEST</div>
+      <div class="ax-brand-title">DIFFUSION <span>AX</span> CONTEST{mode}</div>
       <div class="ax-brand-user">{who}</div>
     </div>
     """)
+    if IS_STAGING:
+        st.caption("🧪 STAGING MODE · 운영 점수가 아닌 staging 복사본 DB를 사용합니다.")
 
 
 def render_agent_card(agent):
@@ -523,9 +552,11 @@ with logout_col:
 
 # ---------------- JUDGE ----------------
 if role == "judge":
-    weight = USERS[user]["weight"]
-    if weight == 3:
-        st.warning("DIFF_CHAMPION 채점은 **3배 가중치**로 최종 집계됩니다.")
+    if user == "DIFF_CHAMPION":
+        champion_weight = get_champion_weight()
+        st.warning(
+            f"DIFF_CHAMPION 채점은 **{champion_weight}배 가중치**로 최종 집계됩니다."
+        )
     else:
         st.info("채점 결과는 **1배 가중치**로 최종 집계됩니다.")
 
@@ -669,7 +700,7 @@ with tab_settings:
             st.success(f"DIFF_CHAMPION 가중치를 ×{int(champion_weight)}로 저장했습니다.")
             st.rerun()
         except Exception as ex:
-            st.error("가중치 저장에 실패했습니다. 먼저 schema.sql을 Supabase에서 실행해 주세요.")
+            st.error("가중치 저장에 실패했습니다. DB migration 상태를 확인해 주세요.")
             st.caption(str(ex))
 
     st.divider()
