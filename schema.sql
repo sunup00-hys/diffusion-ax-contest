@@ -1,40 +1,43 @@
+-- DIFFUSION AX Contest V2
+-- 기존 Supabase 프로젝트에서 SQL Editor > New query에 전체 붙여넣고 Run 하세요.
 
--- DIFFUSION AX Contest shared database
--- Supabase > SQL Editor 에서 전체 실행
+-- 1) 작품 수를 6개까지 허용
+alter table public.agents
+  drop constraint if exists agents_slot_check;
 
-create table if not exists public.agents (
-  slot smallint primary key check (slot between 1 and 5),
-  name text not null
-);
+alter table public.agents
+  add constraint agents_slot_check
+  check (slot between 1 and 6);
 
-insert into public.agents (slot, name) values
-  (1, 'Agent 1'),
-  (2, 'Agent 2'),
-  (3, 'Agent 3'),
-  (4, 'Agent 4'),
-  (5, 'Agent 5')
+alter table public.agents
+  add column if not exists team text default '',
+  add column if not exists presenter text default '',
+  add column if not exists title text default '';
+
+insert into public.agents (slot, name, team, presenter, title)
+values (6, 'Agent 6', '', '', '')
 on conflict (slot) do nothing;
 
-create table if not exists public.scores (
-  judge text not null,
-  agent_slot smallint not null references public.agents(slot) on delete cascade,
-  c1 smallint not null check (c1 between 1 and 5),
-  c2 smallint not null check (c2 between 1 and 5),
-  c3 smallint not null check (c3 between 1 and 5),
-  c4 smallint not null check (c4 between 1 and 5),
-  c5 smallint not null check (c5 between 1 and 5),
-  total smallint not null check (total between 5 and 25),
-  weight smallint not null check (weight in (1,3)),
-  weighted_total smallint not null,
-  comment text default '',
-  updated_at timestamptz not null default now(),
-  primary key (judge, agent_slot)
+-- 2) DIFF_CHAMPION 가중치를 설정값으로 사용할 수 있도록 범위 확장
+alter table public.scores
+  drop constraint if exists scores_weight_check;
+
+alter table public.scores
+  add constraint scores_weight_check
+  check (weight between 1 and 10);
+
+-- 3) 앱 설정값 저장 테이블
+create table if not exists public.app_settings (
+  key text primary key,
+  value_int integer not null,
+  updated_at timestamptz not null default now()
 );
 
-create index if not exists idx_scores_agent_slot on public.scores(agent_slot);
-create index if not exists idx_scores_judge on public.scores(judge);
+insert into public.app_settings (key, value_int)
+values ('champion_weight', 3)
+on conflict (key) do nothing;
 
--- 앱은 서버의 service_role key를 사용하도록 구성합니다.
--- 브라우저에서 DB를 직접 접근하지 않도록 RLS를 켜고 공개 정책은 만들지 않습니다.
+-- 4) service_role key 사용 전제
 alter table public.agents enable row level security;
 alter table public.scores enable row level security;
+alter table public.app_settings enable row level security;
