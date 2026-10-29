@@ -20,8 +20,30 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
       - name: Syntax check
         run: python -m py_compile app.py
+
+      - name: Streamlit boot smoke test
+        env:
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_KEY: dummy-test-key
+          AX_ENV: staging
+        run: |
+          streamlit run app.py --server.headless true --server.address 127.0.0.1 --server.port 8501 > streamlit.log 2>&1 &
+          APP_PID=$!
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8501/_stcore/health; then
+              kill $APP_PID || true
+              exit 0
+            fi
+            sleep 1
+          done
+          cat streamlit.log
+          kill $APP_PID || true
+          exit 1
 
       - name: Validate required files
         run: |
