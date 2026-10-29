@@ -45,10 +45,10 @@ TOTAL_VOTES = len(JUDGES) * AGENT_COUNT
 
 CRITERIA = [
     ("현업 문제 해결성", "실제 현장의 Pain Point / Needs를 제대로 해결하는가?"),
-    ("업무 효과", "시간 단축 · 품질 향상 · Risk 감소 등 효과가 명확한가?"),
-    ("System/Agent 완성도", "System/Agent의 정확성 · 신뢰성이 실제 업무 활용 가능한 수준인가?"),
-    ("활용 편의성", "쉽게 사용 가능하며 Legacy System / Data와 잘 연결되는가?"),
-    ("확산 가능성", "다른 공정 · 팀에도 Skill / Tool / Agent 형태로 확산 가능한가?"),
+    ("업무 효과", "업무 효율 · 품질 · Risk 측면의 개선 효과가 명확한가?"),
+    ("System/Agent 완성도", "System/Agent의 정확성 · 신뢰성 · 안정성이 실제 업무 활용 가능한 수준인가?"),
+    ("활용 편의성", "일반 구성원이 쉽게 접근하고, 별도 교육 없이 업무에 활용할 수 있는가?"),
+    ("확산 가능성", "다른 공정 · 팀에도 재사용 · 확산이 가능한 구조인가?"),
 ]
 
 APP_ENV = os.getenv("AX_ENV", "production").strip().lower()
@@ -575,6 +575,7 @@ if role == "judge":
         old_comment = old.get("comment") or ""
         st.success("이미 제출한 Agent입니다. 다시 제출하면 기존 점수가 수정됩니다.")
 
+    st.info("평가 점수는 **5점이 가장 높고, 1점이 가장 낮습니다.**")
     st.caption("1점 미흡 · 2점 다소 미흡 · 3점 보통 · 4점 우수 · 5점 매우 우수")
     values = []
     with st.form(f"score_form_{slot}"):
