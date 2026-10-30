@@ -605,9 +605,34 @@ if role == "judge":
             st.caption(str(ex))
 
     rows = get_all_scores()
-    done_slots = {int(r["agent_slot"]) for r in rows if r.get("judge") == user}
+    my_scores = {
+        int(r["agent_slot"]): r
+        for r in rows
+        if r.get("judge") == user
+    }
+    done_slots = set(my_scores.keys())
     st.progress(len(done_slots) / AGENT_COUNT)
     st.caption(f"내 투표 진행률: {len(done_slots)}/{AGENT_COUNT} 작품 완료")
+
+    st.divider()
+    st.markdown("### 📋 내 채점 현황")
+    status_rows = []
+    for agent in agents:
+        agent_slot = int(agent["slot"])
+        score = my_scores.get(agent_slot)
+        status_rows.append(
+            {
+                "순번": agent_slot,
+                "Agent명": agent_title(agent),
+                "완료여부": "✅ 완료" if score else "— 미완료",
+                "점수": f"{int(score['total'])} / 25" if score else "—",
+            }
+        )
+    st.dataframe(
+        pd.DataFrame(status_rows),
+        use_container_width=True,
+        hide_index=True,
+    )
     st.stop()
 
 # ---------------- MASTER ----------------
