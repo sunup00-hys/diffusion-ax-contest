@@ -23,6 +23,7 @@ USERS = {
     "NAND_IMP": {"password": "6026", "role": "judge", "weight": 1},
     "M15X_DIFF": {"password": "7026", "role": "judge", "weight": 1},
     "DIFF_STRAT": {"password": "8026", "role": "judge", "weight": 1},
+    "DIFF_AIX": {"password": "1004", "role": "judge", "weight": 1},
     "DIFF_CHAMPION": {"password": "9026", "role": "judge", "weight": 3},
     "MASTER": {"password": "2006", "role": "admin", "weight": 0},
 }
@@ -30,6 +31,7 @@ USERS = {
 JUDGES = [
     "DIFF_CHAMPION",
     "DIFF_STRAT",
+    "DIFF_AIX",
     "DRAM_ALD",
     "DRAM_FUR",
     "DRAM_IMP",
@@ -369,7 +371,7 @@ def award_entry(row, gold=False):
 def render_summary(completed_judges, complete_count):
     html_block(f"""
     <div class="ax-summary">
-      <div class="ax-metric"><div class="ax-metric-label">채점 완료 심사위원</div><div class="ax-metric-value">{completed_judges} / 9</div></div>
+      <div class="ax-metric"><div class="ax-metric-label">채점 완료 심사위원</div><div class="ax-metric-value">{completed_judges} / {len(JUDGES)}</div></div>
       <div class="ax-metric"><div class="ax-metric-label">전체 채점 진행</div><div class="ax-metric-value">{complete_count} / {TOTAL_VOTES}</div></div>
       <div class="ax-metric"><div class="ax-metric-label">Agent 최종점수 만점</div><div class="ax-metric-value">{get_max_total()}점</div></div>
     </div>
@@ -425,7 +427,7 @@ def render_result_table(result):
           <td class="ax-left">{esc(text_or(r['제목']))}</td>
           <td><b>{int(r['최종점수'])}</b></td>
           <td>{award}</td>
-          <td>{int(r['제출인원'])}/9</td>
+          <td>{int(r['제출인원'])}/{len(JUDGES)}</td>
           <td>{int(r['현업문제'])}</td>
           <td>{int(r['업무효과'])}</td>
           <td>{int(r['완성도'])}</td>
@@ -658,10 +660,10 @@ with tab_result:
         render_awards(result)
         render_result_table(result)
 
-        if completed_judges < 9:
+        if completed_judges < len(JUDGES):
             st.caption("※ 아직 모든 심사위원의 채점이 완료되지 않아 순위가 변동될 수 있습니다.")
         else:
-            st.success("9명 전원의 6개 작품 투표가 완료되었습니다. 최종 결과를 확정할 수 있습니다.")
+            st.success(f"{len(JUDGES)}명 전원의 6개 작품 투표가 완료되었습니다. 최종 결과를 확정할 수 있습니다.")
 
         comments_df = pd.DataFrame()
         if not score_df.empty and "comment" in score_df.columns:
@@ -696,7 +698,7 @@ with tab_status:
             rows.append(row)
 
         st.markdown("### ✅ 투표 여부")
-        st.caption("DIFF_CHAMPION → DIFF_STRAT → 나머지 ABC 순")
+        st.caption("DIFF_CHAMPION → DIFF_STRAT → DIFF_AIX → 나머지 ABC 순")
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
         complete_count = 0 if score_df.empty else len(score_df.drop_duplicates(subset=["judge", "agent_slot"]))
         st.progress(min(complete_count / TOTAL_VOTES, 1.0))
