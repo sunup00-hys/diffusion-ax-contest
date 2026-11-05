@@ -305,7 +305,7 @@ div[data-testid="stTabs"] button{font-weight:800}
 .ax-awards-kicker{text-align:center;font-size:.72rem;letter-spacing:.22em;font-weight:900;color:#bdcbe0}.ax-awards-title{text-align:center;margin:6px 0 2px;font-size:clamp(1.55rem,3.7vw,2.65rem);font-weight:1000;line-height:1}.ax-awards-title span{display:block;margin-top:5px;font-size:1.14em;background:linear-gradient(180deg,#fff1a6,#e9b233 55%,#9c6207);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.ax-awards-sub{text-align:center;color:#a9b8cc;font-size:.83rem;margin:8px 0 24px}
 .ax-podium-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"silver gold bronze";gap:14px;align-items:end}.ax-award-col.silver{grid-area:silver}.ax-award-col.gold{grid-area:gold}.ax-award-col.bronze{grid-area:bronze}.ax-award-head{display:flex;justify-content:center;align-items:center;gap:7px;font-weight:950;margin-bottom:10px;text-align:center}.ax-medal{font-size:1.7rem}.ax-award-name{font-size:1.05rem}.ax-award-count{font-size:.70rem;color:#9fb0c6}.ax-entry-list{display:grid;gap:9px}
 .ax-entry{min-height:104px;display:flex;flex-direction:column;justify-content:center;padding:13px 11px;border-radius:15px;color:#102033;background:linear-gradient(180deg,rgba(245,248,252,.98),rgba(214,225,239,.98));border:1px solid rgba(255,255,255,.72);box-shadow:0 10px 24px rgba(0,0,0,.23)}.ax-gold-entry{min-height:126px;border:2px solid #efc351;box-shadow:0 0 30px rgba(240,181,44,.24),0 13px 30px rgba(0,0,0,.28)}.ax-entry.empty{opacity:.38}.ax-team{font-weight:1000;font-size:1rem;overflow-wrap:anywhere}.ax-presenter{font-size:.84rem;font-weight:800;margin-top:5px}.ax-title{font-size:.74rem;color:#526277;margin-top:6px;line-height:1.35}
-.ax-stage{margin-top:9px;border-radius:16px 16px 7px 7px;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:1000;text-shadow:0 2px 8px rgba(0,0,0,.35);box-shadow:inset 0 1px rgba(255,255,255,.26),0 14px 28px rgba(0,0,0,.28)}.silver .ax-stage{height:86px;background:linear-gradient(180deg,#b9c2ce,#7d8999 52%,#4d5968);color:#fff}.gold .ax-stage{height:230px;background:linear-gradient(180deg,#e8b735,#bb790b 52%,#744000);color:#fff8cf}.bronze .ax-stage{height:68px;background:linear-gradient(180deg,#c87b3e,#8e4c21 52%,#5c3017);color:#ffe5c7}
+.ax-stage{margin-top:9px;border-radius:16px 16px 7px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:1000;text-shadow:0 2px 8px rgba(0,0,0,.35);box-shadow:inset 0 1px rgba(255,255,255,.26),0 14px 28px rgba(0,0,0,.28)}.ax-stage-rank{font-size:2rem;line-height:1}.ax-stage-prize{margin-top:10px;font-size:.92rem;font-weight:900;line-height:1.2;white-space:nowrap}.silver .ax-stage{height:86px;background:linear-gradient(180deg,#b9c2ce,#7d8999 52%,#4d5968);color:#fff}.gold .ax-stage{height:230px;background:linear-gradient(180deg,#e8b735,#bb790b 52%,#744000);color:#fff8cf}.bronze .ax-stage{height:68px;background:linear-gradient(180deg,#c87b3e,#8e4c21 52%,#5c3017);color:#ffe5c7}
 
 .ax-section{margin-top:18px;border:1px solid rgba(130,164,206,.18);border-radius:18px;background:linear-gradient(180deg,rgba(11,28,49,.94),rgba(5,18,33,.94));padding:15px}.ax-section-title{font-size:1.08rem;font-weight:950;margin-bottom:10px}.ax-section-sub{font-size:.72rem;color:#9fb0c6;margin-left:6px}.ax-table-wrap{overflow-x:auto;border-radius:13px;border:1px solid rgba(130,164,206,.18)}.ax-table{width:100%;min-width:980px;border-collapse:collapse;background:rgba(4,15,28,.75)}.ax-table th{background:#112945;color:#d8e4f2;padding:10px 8px;font-size:.75rem;text-align:center;border-bottom:1px solid rgba(130,164,206,.18);white-space:nowrap}.ax-table td{padding:10px 8px;font-size:.81rem;text-align:center;color:#edf3fa;border-bottom:1px solid rgba(143,177,221,.09)}.ax-table tr.rank1 td{background:linear-gradient(90deg,rgba(217,167,40,.13),rgba(217,167,40,.03))}.ax-rank{display:inline-flex;width:29px;height:29px;border-radius:50%;align-items:center;justify-content:center;font-weight:1000;background:#1b314d}.ax-rank.r1{background:linear-gradient(135deg,#ffe487,#c98a0d);color:#291900}.ax-rank.r2{background:linear-gradient(135deg,#edf2f7,#8997a8);color:#13202e}.ax-rank.r3{background:linear-gradient(135deg,#e3a36e,#8f4a24);color:#261208}.ax-left{text-align:left!important;max-width:280px}.ax-team-cell{font-weight:950}
 
@@ -393,17 +393,17 @@ def render_awards(result):
         <div class="ax-award-col silver">
           <div class="ax-award-head"><span class="ax-medal">🥈</span><span class="ax-award-name">우수상</span><span class="ax-award-count">2팀</span></div>
           <div class="ax-entry-list">{award_entry(silver[0])}{award_entry(silver[1])}</div>
-          <div class="ax-stage">2</div>
+          <div class="ax-stage"><div class="ax-stage-rank">2</div><div class="ax-stage-prize">(상금 20만원)</div></div>
         </div>
         <div class="ax-award-col gold">
           <div class="ax-award-head"><span class="ax-medal">🥇</span><span class="ax-award-name">최우수상</span><span class="ax-award-count">2팀</span></div>
           <div class="ax-entry-list">{award_entry(gold[0], gold=True)}{award_entry(gold[1], gold=True)}</div>
-          <div class="ax-stage">1</div>
+          <div class="ax-stage"><div class="ax-stage-rank">1</div><div class="ax-stage-prize">(상금 50만원)</div></div>
         </div>
         <div class="ax-award-col bronze">
           <div class="ax-award-head"><span class="ax-medal">🥉</span><span class="ax-award-name">장려상</span><span class="ax-award-count">2팀</span></div>
           <div class="ax-entry-list">{award_entry(bronze[0])}{award_entry(bronze[1])}</div>
-          <div class="ax-stage">3</div>
+          <div class="ax-stage"><div class="ax-stage-rank">3</div><div class="ax-stage-prize">(상금 15만원)</div></div>
         </div>
       </div>
     </div>
