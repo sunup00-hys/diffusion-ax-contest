@@ -754,19 +754,23 @@ with tab_status:
 
         for judge in JUDGES:
             row = {"심사위원": judge, "가중치": (get_champion_weight() if judge == "DIFF_CHAMPION" else 1)}
+            judge_sum = 0
             for agent in agents:
-                if score_df.empty:
-                    done = False
-                else:
-                    done = (
+                score_value = None
+                if not score_df.empty:
+                    matched = score_df[
                         (score_df["judge"] == judge)
                         & (score_df["agent_slot"].astype(int) == int(agent["slot"]))
-                    ).any()
-                row[agent_title(agent)] = "✅" if done else "—"
+                    ]
+                    if not matched.empty:
+                        score_value = int(matched.iloc[0]["total"])
+                        judge_sum += score_value
+                row[agent_title(agent)] = score_value if score_value is not None else "—"
+            row["SUM"] = judge_sum
             rows.append(row)
 
-        st.markdown("### ✅ 투표 여부")
-        st.caption("DIFF_CHAMPION → DIFF_STRAT → DIFF_AIX → 나머지 ABC 순")
+        st.markdown("### 📊 평가자별 점수 현황")
+        st.caption("각 작품 총점(25점 만점) · DIFF_CHAMPION → DIFF_STRAT → DIFF_AIX → 나머지 ABC 순")
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
         complete_count = 0 if score_df.empty else len(score_df.drop_duplicates(subset=["judge", "agent_slot"]))
         st.progress(min(complete_count / TOTAL_VOTES, 1.0))
