@@ -675,6 +675,40 @@ with tab_result:
         csv = result.to_csv(index=False).encode("utf-8-sig")
         st.download_button("⬇️ 최종 결과 CSV 다운로드", data=csv, file_name="DIFFUSION_AX_최종결과.csv", mime="text/csv", use_container_width=True)
 
+        if not score_df.empty:
+            agents_by_slot = {int(a["slot"]): a for a in get_agents()}
+            detail_df = score_df.copy()
+            detail_df["심사위원순서"] = detail_df["judge"].map(JUDGE_ORDER).fillna(999)
+            detail_df = detail_df.sort_values(["심사위원순서", "agent_slot"])
+
+            detail_rows = []
+            for _, row in detail_df.iterrows():
+                slot = int(row["agent_slot"])
+                agent = agents_by_slot.get(slot, {})
+                detail_rows.append({
+                    "평가자": row["judge"],
+                    "순번": slot,
+                    "Agent명": text_or(agent.get("title"), text_or(agent.get("name"), f"Agent {slot}")),
+                    "현업 문제 해결성": int(row["c1"]),
+                    "업무 효과": int(row["c2"]),
+                    "System/Agent 완성도": int(row["c3"]),
+                    "활용 편의성": int(row["c4"]),
+                    "확산 가능성": int(row["c5"]),
+                    "총점": int(row["total"]),
+                    "가중치": int(row["weight"]),
+                    "가중 총점": int(row["weighted_total"]),
+                    "코멘트": str(row.get("comment") or ""),
+                })
+
+            detail_csv = pd.DataFrame(detail_rows).to_csv(index=False).encode("utf-8-sig")
+            st.download_button(
+                "⬇️ 심사위원별 상세 채점 CSV 다운로드",
+                data=detail_csv,
+                file_name="DIFFUSION_AX_심사위원별_상세채점.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
     live_results()
 
 with tab_status:
