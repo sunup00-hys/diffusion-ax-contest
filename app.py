@@ -700,11 +700,45 @@ with tab_result:
                     "코멘트": str(row.get("comment") or ""),
                 })
 
-            detail_csv = pd.DataFrame(detail_rows).to_csv(index=False).encode("utf-8-sig")
+            detail_table = pd.DataFrame(detail_rows)
+            detail_csv = detail_table.to_csv(index=False).encode("utf-8-sig")
             st.download_button(
                 "⬇️ 심사위원별 상세 채점 CSV 다운로드",
                 data=detail_csv,
                 file_name="DIFFUSION_AX_심사위원별_상세채점.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
+            compare_table = (
+                detail_table.pivot_table(
+                    index=["순번", "Agent명"],
+                    columns="평가자",
+                    values="총점",
+                    aggfunc="first",
+                )
+                .reindex(columns=JUDGES)
+                .reset_index()
+            )
+            judge_score_columns = [j for j in JUDGES if j in compare_table.columns]
+            compare_table["평균점수"] = compare_table[judge_score_columns].mean(axis=1).round(2)
+
+            weighted_totals = (
+                detail_table.groupby(["순번", "Agent명"], as_index=False)["가중 총점"]
+                .sum()
+                .rename(columns={"가중 총점": "최종가중총점"})
+            )
+            compare_table = compare_table.merge(
+                weighted_totals,
+                on=["순번", "Agent명"],
+                how="left",
+            )
+            compare_table = compare_table.sort_values("순번")
+            compare_csv = compare_table.to_csv(index=False).encode("utf-8-sig")
+            st.download_button(
+                "⬇️ Agent별 평가자 점수 비교 CSV 다운로드",
+                data=compare_csv,
+                file_name="DIFFUSION_AX_Agent별_평가자점수비교.csv",
                 mime="text/csv",
                 use_container_width=True,
             )
